@@ -1,0 +1,65 @@
+# Code Owners for continual-tiny-transformer
+# This file defines who gets automatically requested for review
+# when files in certain paths are changed.
+#
+# For more information about CODEOWNERS, see:
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global owners - these users are requested for all changes
+* @danieleschmidt
+
+# Core library code
+/src/continual_transformer/ @danieleschmidt
+
+# Core configuration and algorithms
+/src/continual_transformer/core/ @danieleschmidt
+/src/continual_transformer/config.py @danieleschmidt
+
+# Adapter implementations (critical for continual learning)
+/src/continual_transformer/adapters/ @danieleschmidt
+
+# Task management and metrics
+/src/continual_transformer/tasks/ @danieleschmidt
+/src/continual_transformer/metrics/ @danieleschmidt
+
+# Build and packaging
+/pyproject.toml @danieleschmidt
+/requirements*.txt @danieleschmidt
+/setup.py @danieleschmidt
+/Dockerfile @danieleschmidt
+/docker-compose.yml @danieleschmidt
+
+# CI/CD and automation
+/.github/ @danieleschmidt
+/.pre-commit-config.yaml @danieleschmidt
+/tox.ini @danieleschmidt
+/Makefile @danieleschmidt
+
+# Documentation
+/README.md @danieleschmidt
+/docs/ @danieleschmidt
+/ARCHITECTURE.md @danieleschmidt
+/CONTRIBUTING.md @danieleschmidt
+/CHANGELOG.md @danieleschmidt
+
+# Security and legal
+/SECURITY.md @danieleschmidt
+/LICENSE @danieleschmidt
+/CODE_OF_CONDUCT.md @danieleschmidt
+
+# Testing infrastructure
+/tests/ @danieleschmidt
+/conftest.py @danieleschmidt
+
+# Linting and formatting configuration
+/.editorconfig @danieleschmidt
+/ruff.toml @danieleschmidt
+/mypy.ini @danieleschmidt
+
+# Scripts and tooling
+/scripts/ @danieleschmidt
+
+# Example: Add team-based ownership (uncomment and modify as needed)
+# /src/continual_transformer/adapters/ @ml-team
+# /tests/benchmarks/ @performance-team
+# /docs/api/ @docs-team
