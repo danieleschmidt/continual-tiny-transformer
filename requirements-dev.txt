@@ -1,0 +1,54 @@
+# Include production requirements
+-r requirements.txt
+
+# Testing Framework
+pytest>=7.0.0,<8.0.0
+pytest-cov>=4.0.0,<5.0.0
+pytest-xdist>=3.0.0,<4.0.0
+pytest-mock>=3.8.0,<4.0.0
+pytest-benchmark>=4.0.0,<5.0.0
+pytest-timeout>=2.1.0,<3.0.0
+hypothesis>=6.54.0,<7.0.0
+
+# Code Quality & Formatting
+black>=22.0.0,<24.0.0
+isort>=5.10.0,<6.0.0
+ruff>=0.1.0,<1.0.0
+mypy>=1.0.0,<2.0.0
+bandit>=1.7.0,<2.0.0
+
+# Development Tools
+pre-commit>=2.20.0,<4.0.0
+tox>=4.0.0,<5.0.0
+bump2version>=1.0.0,<2.0.0
+
+# Documentation
+sphinx>=5.0.0,<8.0.0
+sphinx-rtd-theme>=1.0.0,<3.0.0
+myst-parser>=0.18.0,<3.0.0
+nbsphinx>=0.8.0,<1.0.0
+sphinx-autodoc-typehints>=1.19.0,<2.0.0
+sphinxcontrib-bibtex>=2.5.0,<3.0.0
+
+# Jupyter & Notebooks
+jupyter>=1.0.0,<2.0.0
+ipykernel>=6.15.0,<7.0.0
+nbconvert>=7.0.0,<8.0.0
+jupyter-book>=0.15.0,<1.0.0
+
+# Benchmarking & Profiling
+matplotlib>=3.5.0,<4.0.0
+seaborn>=0.11.0,<1.0.0
+memory-profiler>=0.60.0,<1.0.0
+line-profiler>=4.0.0,<5.0.0
+py-spy>=0.3.0,<1.0.0
+
+# Security & Dependency Management
+safety>=2.0.0,<3.0.0
+pip-audit>=2.0.0,<3.0.0
+pipdeptree>=2.0.0,<3.0.0
+
+# Build & Release Tools
+build>=0.8.0,<1.0.0
+twine>=4.0.0,<5.0.0
+wheel>=0.38.0,<1.0.0

@@ -1,0 +1,254 @@
+# Docker Compose configuration for continual-tiny-transformer
+# Usage: docker-compose up -d
+# Development: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+version: '3.8'
+
+services:
+  # Main application service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+      args:
+        BUILD_DATE: ${BUILD_DATE:-$(date -u +'%Y-%m-%dT%H:%M:%SZ')}
+        VCS_REF: ${VCS_REF:-$(git rev-parse --short HEAD)}
+    image: continual-tiny-transformer:latest
+    container_name: continual-transformer-app
+    restart: unless-stopped
+    environment:
+      - PYTHONPATH=/app/src
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=INFO
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data:ro
+      - ./models:/app/models
+      - ./outputs:/app/outputs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import continual_transformer; print('OK')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - continual-net
+
+  # Development service with live code reload
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    image: continual-tiny-transformer:dev
+    container_name: continual-transformer-dev
+    ports:
+      - "8000:8000"
+      - "8888:8888"  # Jupyter Lab
+      - "8080:8080"  # Additional dev port
+    volumes:
+      - .:/app
+      - dev_cache:/root/.cache
+    environment:
+      - PYTHONPATH=/app/src
+      - PYTHONUNBUFFERED=1
+      - DEVELOPMENT=1
+      - JUPYTER_ENABLE_LAB=yes
+    command: >
+      bash -c "
+        pip install -e . &&
+        jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password='' &
+        tail -f /dev/null
+      "
+    networks:
+      - continual-net
+    profiles:
+      - dev
+
+  # GPU-enabled service for training
+  gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: gpu
+    image: continual-tiny-transformer:gpu
+    container_name: continual-transformer-gpu
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - PYTHONPATH=/app/src
+      - CUDA_VISIBLE_DEVICES=0
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./data:/app/data:ro
+      - ./models:/app/models
+      - ./outputs:/app/outputs
+      - gpu_cache:/root/.cache
+    networks:
+      - continual-net
+    profiles:
+      - gpu
+
+  # Redis for caching and task queues (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: continual-transformer-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - continual-net
+    profiles:
+      - services
+
+  # PostgreSQL for metadata storage (optional)
+  postgres:
+    image: postgres:15-alpine
+    container_name: continual-transformer-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: continual_transformer
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpassword}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - continual-net
+    profiles:
+      - services
+
+  # MLflow tracking server (optional)
+  mlflow:
+    image: python:3.10-slim
+    container_name: continual-transformer-mlflow
+    restart: unless-stopped
+    command: >
+      bash -c "
+        pip install mlflow[extras] psycopg2-binary &&
+        mlflow server --host 0.0.0.0 --port 5000 --default-artifact-root /mlflow/artifacts --backend-store-uri postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-devpassword}@postgres:5432/continual_transformer
+      "
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow_artifacts:/mlflow/artifacts
+    environment:
+      - MLFLOW_TRACKING_URI=http://localhost:5000
+    depends_on:
+      - postgres
+    networks:
+      - continual-net
+    profiles:
+      - services
+
+  # Jupyter notebook service for experimentation
+  jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    image: continual-tiny-transformer:jupyter
+    container_name: continual-transformer-jupyter
+    ports:
+      - "8889:8888"
+    volumes:
+      - .:/app
+      - jupyter_data:/root/.jupyter
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - PYTHONPATH=/app/src
+    command: >
+      bash -c "
+        pip install -e . &&
+        jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token='jupyter' --NotebookApp.password=''
+      "
+    networks:
+      - continual-net
+    profiles:
+      - jupyter
+
+  # TensorBoard for experiment visualization
+  tensorboard:
+    image: tensorflow/tensorflow:latest
+    container_name: continual-transformer-tensorboard
+    ports:
+      - "6006:6006"
+    volumes:
+      - ./outputs/tensorboard:/logs
+    command: tensorboard --logdir=/logs --host=0.0.0.0 --port=6006
+    networks:
+      - continual-net
+    profiles:
+      - monitoring
+
+  # Monitoring with Prometheus (optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: continual-transformer-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - continual-net
+    profiles:
+      - monitoring
+
+  # Grafana for dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: continual-transformer-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    networks:
+      - continual-net
+    profiles:
+      - monitoring
+
+# Named volumes for persistent data
+volumes:
+  redis_data:
+    driver: local
+  postgres_data:
+    driver: local
+  mlflow_artifacts:
+    driver: local
+  jupyter_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  dev_cache:
+    driver: local
+  gpu_cache:
+    driver: local
+
+# Custom network
+networks:
+  continual-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

@@ -1,0 +1,186 @@
+{
+  // Python configuration
+  "python.defaultInterpreterPath": "./venv/bin/python",
+  "python.terminal.activateEnvironment": true,
+  "python.terminal.activateEnvInCurrentTerminal": true,
+  
+  // Linting and formatting
+  "python.linting.enabled": true,
+  "python.linting.ruffEnabled": true,
+  "python.linting.ruffArgs": ["--config=pyproject.toml"],
+  "python.linting.banditEnabled": true,
+  "python.linting.mypyEnabled": true,
+  "python.linting.mypyArgs": ["--config-file=pyproject.toml"],
+  
+  // Formatting
+  "python.formatting.provider": "black",
+  "python.formatting.blackArgs": ["--line-length=88"],
+  "python.sortImports.args": ["--profile=black"],
+  
+  // Editor settings
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": false,
+  "editor.formatOnType": false,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": true,
+    "source.fixAll.ruff": true
+  },
+  
+  // Python-specific editor settings
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.rulers": [88],
+    "editor.wordWrap": "off"
+  },
+  
+  // YAML settings
+  "[yaml]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "editor.autoIndent": "advanced"
+  },
+  
+  // JSON settings
+  "[json]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+  
+  // Markdown settings
+  "[markdown]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "editor.wordWrap": "on",
+    "editor.quickSuggestions": {
+      "comments": "off",
+      "strings": "off",
+      "other": "off"
+    }
+  },
+  
+  // File associations
+  "files.associations": {
+    "*.yml": "yaml",
+    "*.yaml": "yaml",
+    "Dockerfile*": "dockerfile",
+    "*.dockerignore": "ignore",
+    ".gitignore": "ignore",
+    ".pre-commit-config.yaml": "yaml",
+    "pyproject.toml": "toml",
+    "tox.ini": "ini"
+  },
+  
+  // Testing configuration
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestArgs": [
+    "tests",
+    "--verbose",
+    "--tb=short"
+  ],
+  "python.testing.unittestEnabled": false,
+  "python.testing.autoTestDiscoverOnSaveEnabled": true,
+  
+  // IntelliSense settings
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.completeFunctionParens": true,
+  "python.analysis.autoSearchPaths": true,
+  "python.analysis.extraPaths": ["./src"],
+  
+  // File watching
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/.pytest_cache/**": true,
+    "**/__pycache__/**": true,
+    "**/.mypy_cache/**": true,
+    "**/.tox/**": true,
+    "**/venv/**": true,
+    "**/env/**": true,
+    "**/.venv/**": true,
+    "**/wandb/**": true,
+    "**/mlruns/**": true,
+    "**/outputs/**": true,
+    "**/checkpoints/**": true,
+    "**/models/**": true
+  },
+  
+  // Search exclusions
+  "search.exclude": {
+    "**/.git": true,
+    "**/.pytest_cache": true,
+    "**/__pycache__": true,
+    "**/.mypy_cache": true,
+    "**/.tox": true,
+    "**/venv": true,
+    "**/env": true,
+    "**/.venv": true,
+    "**/wandb": true,
+    "**/mlruns": true,
+    "**/outputs": true,
+    "**/build": true,
+    "**/dist": true,
+    "**/*.egg-info": true
+  },
+  
+  // Terminal settings
+  "terminal.integrated.env.linux": {
+    "PYTHONPATH": "${workspaceFolder}/src"
+  },
+  "terminal.integrated.env.osx": {
+    "PYTHONPATH": "${workspaceFolder}/src"
+  },
+  "terminal.integrated.env.windows": {
+    "PYTHONPATH": "${workspaceFolder}\\src"
+  },
+  
+  // Git settings
+  "git.ignoreLimitWarning": true,
+  "git.autofetch": true,
+  
+  // Docker settings
+  "docker.defaultPlatform": "linux/amd64",
+  
+  // Jupyter settings
+  "jupyter.askForKernelRestart": false,
+  "jupyter.alwaysTrustNotebooks": true,
+  "jupyter.runStartupCommands": [
+    "%load_ext autoreload",
+    "%autoreload 2"
+  ],
+  
+  // Extensions recommendations are in extensions.json
+  
+  // Workspace-specific settings
+  "workbench.colorCustomizations": {
+    "activityBar.activeBackground": "#2f7c47",
+    "activityBar.activeBorder": "#422c74",
+    "activityBar.background": "#2f7c47",
+    "activityBar.foreground": "#e7e7e7",
+    "activityBar.inactiveForeground": "#e7e7e799",
+    "activityBarBadge.background": "#422c74",
+    "activityBarBadge.foreground": "#e7e7e7"
+  },
+  
+  // Spell checker
+  "cSpell.words": [
+    "continual",
+    "pytorch",
+    "transformers",
+    "tensorboard",
+    "mlflow",
+    "wandb",
+    "ruff",
+    "mypy",
+    "pytest",
+    "bandit",
+    "isort",
+    "precommit",
+    "dockerfile",
+    "dockerignore",
+    "pyproject"
+  ]
+}

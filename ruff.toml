@@ -1,0 +1,171 @@
+# Ruff configuration file
+# Main config is in pyproject.toml, this provides additional settings
+
+# Global settings
+line-length = 88
+target-version = "py38"
+src = ["src", "tests"]
+extend-exclude = [
+    ".bzr",
+    ".direnv", 
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+    "wandb",
+    "mlruns",
+    "outputs",
+    "checkpoints",
+]
+
+# Rule selection
+[lint]
+# Enable rules
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "UP",   # pyupgrade
+    "ARG",  # flake8-unused-arguments
+    "SIM",  # flake8-simplify
+    "TID",  # flake8-tidy-imports
+    "ICN",  # flake8-import-conventions
+    "PL",   # pylint
+    "S",    # bandit (security)
+    "RUF",  # ruff-specific rules
+    "N",    # pep8-naming
+    "D",    # pydocstyle
+    "ERA",  # eradicate (commented code)
+    "PD",   # pandas-vet
+    "NPY",  # numpy-specific rules
+    "AIR",  # airflow
+    "PERF", # performance anti-patterns
+]
+
+# Disable specific rules
+ignore = [
+    "E501",    # line too long (handled by black)
+    "W503",    # line break before binary operator (black conflict)
+    "B008",    # do not perform function calls in argument defaults
+    "C901",    # too complex (let developers decide)
+    "PLR0913", # too many arguments to function call
+    "PLR0912", # too many branches
+    "D100",    # missing docstring in public module
+    "D104",    # missing docstring in public package
+    "D107",    # missing docstring in __init__
+    "S101",    # use of assert detected (common in tests)
+    "S311",    # standard pseudo-random generators not suitable for cryptographic purposes
+    "PD901",   # avoid using the generic variable name df for DataFrames
+]
+
+# Allow unused variables when underscore-prefixed
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+# Assume Python 3.8+
+target-version = "py38"
+
+[lint.per-file-ignores]
+# Tests can use assert statements and have missing docstrings
+"tests/**/*.py" = [
+    "S101",    # assert usage
+    "D",       # all docstring rules
+    "PLR2004", # magic value comparison
+    "ARG001",  # unused function argument
+    "PLR0915", # too many statements
+]
+
+# Scripts and examples can be less strict
+"scripts/**/*.py" = [
+    "D",       # all docstring rules
+    "S101",    # assert usage
+    "T201",    # print found
+]
+
+"examples/**/*.py" = [
+    "D",       # all docstring rules
+    "T201",    # print found
+    "S101",    # assert usage
+]
+
+# Allow certain imports in __init__.py files
+"__init__.py" = [
+    "F401",    # imported but unused
+    "F403",    # star import
+]
+
+# Config files can have longer lines
+"setup.py" = ["E501"]
+"setup.cfg" = ["E501"]
+
+[lint.mccabe]
+# Flag errors for functions with cyclomatic complexity higher than 10
+max-complexity = 10
+
+[lint.isort]
+known-first-party = ["continual_transformer"]
+force-single-line = false
+force-sort-within-sections = true
+single-line-exclusions = ["typing"]
+
+[lint.pydocstyle]
+# Use Google-style docstrings
+convention = "google"
+
+[lint.pylint]
+max-args = 8
+max-branches = 15
+max-returns = 8
+max-statements = 60
+
+[lint.flake8-tidy-imports]
+# Disallow all relative imports
+ban-relative-imports = "all"
+
+[lint.flake8-import-conventions]
+# Standard library import conventions
+[lint.flake8-import-conventions.aliases]
+"collections.abc" = "abc"
+datetime = "dt"
+matplotlib = "mpl"
+"matplotlib.pyplot" = "plt"
+numpy = "np"
+pandas = "pd"
+seaborn = "sns"
+tensorflow = "tf"
+torch = "torch"
+"torch.nn" = "nn"
+"torch.nn.functional" = "F"
+
+[lint.bandit]
+# Skip certain security checks that are too restrictive for ML code
+skips = [
+    "B101",  # assert_used
+    "B601",  # paramiko_calls
+    "B602",  # subprocess_popen_with_shell_equals_true
+    "B603",  # subprocess_without_shell_equals_true
+    "B404",  # blacklist import subprocess
+    "B603",  # subprocess_without_shell_equals_true
+]
+
+[format]
+# Formatting options (defer to black mostly)
+quote-style = "double"
+indent-style = "space"
+skip-source-first-line = false
+line-ending = "auto"
