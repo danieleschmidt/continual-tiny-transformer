@@ -1,0 +1,231 @@
+# Release Workflow Template
+# Copy to .github/workflows/release.yml and customize as needed
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  id-token: write  # For trusted publishing to PyPI
+
+env:
+  PYTHON_VERSION: "3.8"
+
+jobs:
+  # Validate release readiness
+  validate:
+    name: Validate Release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Version to release: ${VERSION}"
+          
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Validate version format
+        run: |
+          python -c "
+          import re
+          version = '${{ steps.version.outputs.version }}'
+          if not re.match(r'^\d+\.\d+\.\d+$', version):
+              raise ValueError(f'Invalid version format: {version}')
+          print(f'Valid version: {version}')
+          "
+          
+      - name: Check CHANGELOG.md
+        run: |
+          if ! grep -q "${{ steps.version.outputs.version }}" CHANGELOG.md; then
+            echo "::error::Version ${{ steps.version.outputs.version }} not found in CHANGELOG.md"
+            exit 1
+          fi
+
+  # Run full test suite before release
+  test:
+    name: Test Before Release
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+
+  # Build release artifacts
+  build:
+    name: Build Release Artifacts
+    runs-on: ubuntu-latest
+    needs: [validate, test]
+    steps:
+      - uses: actions/checkout@v4
+        
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Install build dependencies
+        run: |
+          pip install build twine
+          
+      - name: Update version in pyproject.toml
+        run: |
+          sed -i 's/version = ".*"/version = "${{ needs.validate.outputs.version }}"/' pyproject.toml
+          
+      - name: Build package
+        run: |
+          python -m build
+          
+      - name: Verify package
+        run: |
+          twine check dist/*
+          python -m pip install dist/*.whl
+          python -c "import continual_transformer; print(continual_transformer.__version__)"
+          
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: dist/
+
+  # Generate release notes
+  release-notes:
+    name: Generate Release Notes
+    runs-on: ubuntu-latest
+    needs: validate
+    outputs:
+      release-notes: ${{ steps.notes.outputs.notes }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Generate release notes
+        id: notes
+        run: |
+          VERSION="${{ needs.validate.outputs.version }}"
+          
+          # Extract release notes from CHANGELOG
+          NOTES=$(awk "/^## \[${VERSION}\]/{flag=1;next}/^## \[/{flag=0}flag" CHANGELOG.md || echo "No changelog entry found")
+          
+          # Create comprehensive release notes
+          cat > release-notes.md << EOF
+          ## 🚀 What's New in v${VERSION}
+          
+          ${NOTES}
+          
+          ## 📦 Installation
+          
+          \`\`\`bash
+          pip install continual-tiny-transformer==${VERSION}
+          \`\`\`
+          
+          ## 📊 Checksums
+          
+          See the Assets section below for package checksums.
+          
+          ## 🔗 Full Changelog
+          
+          **Full Changelog**: https://github.com/your-org/continual-tiny-transformer/compare/v$(git describe --tags --abbrev=0 HEAD^)...v${VERSION}
+          EOF
+          
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          cat release-notes.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+  # Create GitHub release
+  github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [validate, build, release-notes]
+    steps:
+      - uses: actions/checkout@v4
+        
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+          path: dist/
+          
+      - name: Generate checksums
+        run: |
+          cd dist/
+          sha256sum * > SHA256SUMS
+          
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ needs.validate.outputs.version }}
+          name: Release v${{ needs.validate.outputs.version }}
+          body: ${{ needs.release-notes.outputs.release-notes }}
+          files: |
+            dist/*
+          draft: false
+          prerelease: false
+
+  # Publish to PyPI
+  pypi-publish:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    needs: [validate, build, github-release]
+    environment: release
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts
+          path: dist/
+          
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+          
+  # Post-release tasks
+  post-release:
+    name: Post-Release Tasks
+    runs-on: ubuntu-latest
+    needs: [validate, pypi-publish]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Update development version
+        run: |
+          # Increment patch version for development
+          VERSION="${{ needs.validate.outputs.version }}"
+          IFS='.' read -ra PARTS <<< "${VERSION}"
+          NEXT_VERSION="${PARTS[0]}.${PARTS[1]}.$((PARTS[2] + 1))-dev"
+          
+          sed -i "s/version = \".*\"/version = \"${NEXT_VERSION}\"/" pyproject.toml
+          
+      - name: Create development PR
+        uses: peter-evans/create-pull-request@v5
+        with:
+          title: "chore: bump version to ${{ steps.next-version.outputs.version }} for development"
+          body: |
+            Automated post-release version bump for development.
+            
+            This PR updates the version in pyproject.toml to prepare for the next development cycle.
+          branch: post-release/v${{ needs.validate.outputs.version }}
+          commit-message: "chore: bump version for development after v${{ needs.validate.outputs.version }} release"
