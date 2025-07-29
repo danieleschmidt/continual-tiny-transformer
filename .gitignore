@@ -205,3 +205,72 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Machine Learning & AI specific
+# Model files and checkpoints
+*.pkl
+*.pickle
+*.joblib
+*.h5
+*.hdf5
+*.pb
+*.pth
+*.pt
+*.onnx
+*.tflite
+*.mlmodel
+*.pth.tar
+checkpoints/
+checkpoint/
+saved_models/
+models/
+
+# Dataset files
+data/
+datasets/
+*.csv
+*.tsv
+*.parquet
+*.feather
+*.arrow
+
+# Experiment tracking and logging
+wandb/
+mlruns/
+.mlflow/
+tensorboard_logs/
+lightning_logs/
+outputs/
+multirun/
+experiments/
+runs/
+
+# Configuration files with secrets
+config.yaml
+config.yml
+.env.local
+.env.production
+secrets.yaml
+secrets.yml
+
+# Hydra outputs
+.hydra/
+
+# Memory profiling
+*.mprofile
+*.prof
+*.lprof
+
+# Benchmark results
+benchmark_results/
+performance_logs/
+
+# CUDA/GPU specific
+*.cu
+*.cuh
+
+# Jupyter notebook outputs (preserve source)
+*-checkpoint.ipynb
+
+# Development tools
+.pre-commit-config.yaml.bak

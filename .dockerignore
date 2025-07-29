@@ -1,0 +1,204 @@
+# .dockerignore - Exclude files from Docker build context
+# This reduces build time and image size
+
+# Git and version control
+.git
+.gitignore
+.gitattributes
+.github
+
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing and coverage
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+htmlcov/
+
+# Documentation builds
+docs/_build/
+docs/_static/
+docs/_templates/
+site/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# Environments and configuration
+*.env
+*.env.*
+.envrc
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# Machine Learning specific
+# Large model files (use .gitattributes for LFS instead)
+*.pkl
+*.pickle
+*.joblib
+*.h5
+*.hdf5
+*.pb
+*.pth
+*.pt
+*.onnx
+*.tflite
+*.mlmodel
+
+# Training artifacts
+checkpoints/
+models/
+saved_models/
+outputs/
+experiments/
+runs/
+wandb/
+mlruns/
+lightning_logs/
+tensorboard_logs/
+
+# Data directories (mount as volumes instead)
+data/
+datasets/
+*.csv
+*.tsv
+*.json
+*.jsonl
+*.parquet
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+*.log
+logs/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Development tools
+.pre-commit-config.yaml
+.secrets.baseline
+.bandit
+.ruff_cache/
+
+# Docker specific
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# CI/CD
+.travis.yml
+.circleci/
+.github/workflows/
+Jenkinsfile
+azure-pipelines.yml
+
+# Documentation source (keep only built docs if needed)
+README.md
+CONTRIBUTING.md
+CHANGELOG.md
+LICENSE
+*.md
+
+# Configuration files (mount as volumes for runtime config)
+config/
+conf/
+*.yaml
+*.yml
+*.toml
+*.ini
+*.cfg
+
+# Scripts that shouldn't be in container
+scripts/
+tools/
+utilities/
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Compiled translations
+*.mo
+
+# Profiling data
+*.prof
+*.lprof
+*.mprofile
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Archives
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
