@@ -1,51 +1,48 @@
 ---
 name: Feature Request
-about: Suggest an idea for this project
+about: Suggest an idea for continual-tiny-transformer
 title: '[FEATURE] '
-labels: enhancement
+labels: enhancement, needs-triage
 assignees: ''
 
 ---
 
+## Feature Summary
+A clear and concise description of the feature you'd like to see implemented.
+
 ## Problem Statement
-**Is your feature request related to a problem? Please describe.**
-A clear description of what the problem is. Ex. I'm always frustrated when [...]
+Describe the problem this feature would solve. Is your feature request related to a specific limitation or workflow issue?
 
 ## Proposed Solution
-**Describe the solution you'd like**
-A clear description of what you want to happen.
+A clear description of what you want to happen. Include:
+- Expected behavior
+- API changes (if applicable) 
+- Configuration options needed
+- Performance considerations
 
 ## Alternative Solutions
-**Describe alternatives you've considered**
-A clear description of any alternative solutions or features you've considered.
+Describe any alternative solutions or features you've considered.
 
-## Implementation Details
-**Additional context**
-- How would this feature work?
-- What APIs or interfaces would be needed?
-- Are there any breaking changes?
+## Use Case Examples
+Provide specific examples of how this feature would be used:
+
+```python
+# Example usage code
+model = ContinualTransformer()
+# Show how the new feature would work
+```
+
+## Implementation Considerations
+- [ ] Does this require breaking changes?
+- [ ] Does this affect model performance?
+- [ ] Does this require new dependencies?
+- [ ] Does this impact memory usage?
+
+## Additional Context
+Add any other context, mockups, or research about the feature request here.
 
 ## Acceptance Criteria
-**How do we know when this is done?**
 - [ ] Criterion 1
-- [ ] Criterion 2 
-- [ ] Criterion 3
-
-## Research & References
-**Links to relevant resources**
-- Research papers, documentation, or examples
-- Similar implementations in other projects
-- Performance considerations or benchmarks
-
-## Impact Assessment
-**Who would benefit from this feature?**
-- [ ] End users
-- [ ] Developers/Contributors
-- [ ] Researchers
-- [ ] Other: _________
-
-**Priority Level**
-- [ ] Critical (blocking current functionality)
-- [ ] High (significantly improves user experience)
-- [ ] Medium (nice to have improvement)
-- [ ] Low (minor enhancement)
+- [ ] Criterion 2
+- [ ] Documentation updated
+- [ ] Tests added
