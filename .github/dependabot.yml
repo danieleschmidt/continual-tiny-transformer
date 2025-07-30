@@ -1,0 +1,82 @@
+# Dependabot configuration for continual-tiny-transformer
+# Automated dependency updates with security prioritization
+# https://docs.github.com/en/code-security/dependabot
+
+version: 2
+updates:
+  # Python dependencies (pip)
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "danieleschmidt"
+    assignees:
+      - "danieleschmidt"
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    # Group updates for efficiency
+    groups:
+      production-dependencies:
+        dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
+      development-dependencies:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+    # Security-focused ignores
+    ignore:
+      # Ignore major version updates for core ML dependencies
+      - dependency-name: "torch"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "transformers"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions updates
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    reviewers:
+      - "danieleschmidt"
+    assignees:
+      - "danieleschmidt"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+
+  # Docker base images
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    reviewers:
+      - "danieleschmidt"
+    assignees:
+      - "danieleschmidt"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
