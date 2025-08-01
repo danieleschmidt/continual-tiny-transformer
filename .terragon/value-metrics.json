@@ -1,0 +1,48 @@
+{
+  "last_updated": "2025-08-01T17:41:39.011312",
+  "repository": {
+    "name": "continual-tiny-transformer",
+    "maturity_level": "maturing",
+    "maturity_score": 72
+  },
+  "discovery_summary": {
+    "total_items": 1,
+    "high_priority_items": 0,
+    "average_score": 12.3,
+    "categories": {
+      "dependency_maintenance": 1
+    },
+    "sources": {
+      "dependency_audit": 1
+    }
+  },
+  "next_best_item": null,
+  "backlog_items": [
+    {
+      "id": "dep-updates",
+      "title": "Update 16 outdated dependencies",
+      "description": "Update outdated packages: blinker, cryptography, dbus-python, httplib2, launchpadlib",
+      "category": "dependency_maintenance",
+      "source": "dependency_audit",
+      "files_affected": [
+        "requirements.txt",
+        "pyproject.toml"
+      ],
+      "estimated_effort": 2.0,
+      "wsjf_score": 7.5,
+      "ice_score": 280.0,
+      "technical_debt_score": 20,
+      "security_score": 10,
+      "composite_score": 12.3,
+      "risk_level": 0.0,
+      "confidence": 0.0,
+      "discovered_at": "2025-08-01T17:41:38.673049",
+      "priority": "low",
+      "tags": [
+        "maintenance",
+        "dependencies"
+      ]
+    }
+  ],
+  "execution_history": []
+}
