@@ -34,7 +34,7 @@ sphinxcontrib-bibtex>=2.5.0,<3.0.0
 jupyter>=1.0.0,<2.0.0
 ipykernel>=6.15.0,<7.0.0
 nbconvert>=7.0.0,<8.0.0
-jupyter-book>=0.15.0,<1.0.0
+jupyter-book>=0.15.0,<2.0.0
 
 # Benchmarking & Profiling
 matplotlib>=3.5.0,<4.0.0
