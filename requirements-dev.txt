@@ -24,7 +24,7 @@ bump2version>=1.0.0,<2.0.0
 
 # Documentation
 sphinx>=5.0.0,<8.0.0
-sphinx-rtd-theme>=1.0.0,<3.0.0
+sphinx-rtd-theme>=1.0.0,<4.0.0
 myst-parser>=0.18.0,<4.0.0
 nbsphinx>=0.8.0,<1.0.0
 sphinx-autodoc-typehints>=1.19.0,<3.0.0
