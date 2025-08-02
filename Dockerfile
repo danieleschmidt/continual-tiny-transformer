@@ -118,7 +118,7 @@ EXPOSE 8000 8888 8080
 CMD ["bash"]
 
 # GPU-enabled stage for CUDA support
-FROM nvidia/cuda:11.8-devel-ubuntu20.04 as gpu
+FROM nvidia/cuda:12.9.1-devel-ubuntu20.04 as gpu
 
 # Set build arguments
 ARG DEBIAN_FRONTEND=noninteractive
