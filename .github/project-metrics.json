@@ -1,0 +1,299 @@
+{
+  "project": {
+    "name": "continual-tiny-transformer",
+    "description": "Memory-efficient continual learning for transformers with zero parameter expansion",
+    "version": "0.1.0",
+    "created": "2025-01-01T00:00:00Z",
+    "last_updated": "2025-01-01T00:00:00Z"
+  },
+  "metrics": {
+    "development": {
+      "code_quality": {
+        "test_coverage": {
+          "target": 90,
+          "current": 85,
+          "trend": "increasing",
+          "last_measured": "2025-01-01T00:00:00Z"
+        },
+        "code_complexity": {
+          "target": "low",
+          "current": "medium",
+          "cyclomatic_complexity_avg": 3.2,
+          "maintainability_index": 75
+        },
+        "technical_debt": {
+          "ratio": 0.15,
+          "target": 0.10,
+          "trend": "decreasing",
+          "debt_hours": 24
+        },
+        "linting_violations": {
+          "total": 12,
+          "critical": 0,
+          "major": 3,
+          "minor": 9,
+          "target": 0
+        }
+      },
+      "security": {
+        "vulnerabilities": {
+          "critical": 0,
+          "high": 0,
+          "medium": 2,
+          "low": 5,
+          "total": 7,
+          "target": 0
+        },
+        "dependency_audit": {
+          "total_dependencies": 45,
+          "outdated": 3,
+          "vulnerable": 2,
+          "last_audit": "2025-01-01T00:00:00Z"
+        },
+        "secrets_scan": {
+          "secrets_found": 0,
+          "false_positives": 2,
+          "last_scan": "2025-01-01T00:00:00Z"
+        }
+      },
+      "performance": {
+        "build_time": {
+          "avg_seconds": 45,
+          "target_seconds": 30,
+          "trend": "stable"
+        },
+        "test_execution_time": {
+          "unit_tests_seconds": 12,
+          "integration_tests_seconds": 45,
+          "total_seconds": 57,
+          "target_seconds": 60
+        }
+      }
+    },
+    "operational": {
+      "deployment": {
+        "deployment_frequency": {
+          "per_week": 5,
+          "target_per_week": 10,
+          "trend": "increasing"
+        },
+        "deployment_success_rate": {
+          "percentage": 95,
+          "target_percentage": 99,
+          "failed_deployments_last_month": 2
+        },
+        "rollback_rate": {
+          "percentage": 5,
+          "target_percentage": 2,
+          "rollbacks_last_month": 2
+        },
+        "deployment_duration": {
+          "avg_minutes": 8,
+          "target_minutes": 5,
+          "trend": "decreasing"
+        }
+      },
+      "reliability": {
+        "uptime": {
+          "percentage": 99.95,
+          "target_percentage": 99.9,
+          "mttr_minutes": 15,
+          "mtbf_hours": 720
+        },
+        "error_rate": {
+          "percentage": 0.1,
+          "target_percentage": 0.05,
+          "trend": "stable"
+        },
+        "response_time": {
+          "p50_ms": 120,
+          "p95_ms": 350,
+          "p99_ms": 800,
+          "target_p95_ms": 300
+        }
+      },
+      "monitoring": {
+        "alert_volume": {
+          "per_day": 8,
+          "target_per_day": 5,
+          "false_positive_rate": 0.2
+        },
+        "incident_count": {
+          "per_month": 3,
+          "target_per_month": 2,
+          "avg_resolution_time_hours": 2.5
+        }
+      }
+    },
+    "ml_specific": {
+      "model_performance": {
+        "training_efficiency": {
+          "samples_per_second": 1200,
+          "target_samples_per_second": 1500,
+          "gpu_utilization": 0.85,
+          "memory_efficiency": 0.90
+        },
+        "model_accuracy": {
+          "overall_accuracy": 0.92,
+          "target_accuracy": 0.95,
+          "knowledge_retention": 0.88,
+          "catastrophic_forgetting_score": 0.05
+        },
+        "inference_performance": {
+          "latency_ms": 45,
+          "target_latency_ms": 30,
+          "throughput_requests_per_second": 100,
+          "target_throughput": 150
+        }
+      },
+      "data_quality": {
+        "data_drift_score": 0.02,
+        "data_completeness": 0.98,
+        "data_consistency": 0.95,
+        "feature_importance_stability": 0.92
+      },
+      "resource_utilization": {
+        "compute_costs": {
+          "monthly_usd": 450,
+          "target_monthly_usd": 400,
+          "cost_per_training_job": 12
+        },
+        "storage_usage": {
+          "models_gb": 15,
+          "datasets_gb": 120,
+          "logs_gb": 8,
+          "total_gb": 143
+        }
+      }
+    },
+    "team_productivity": {
+      "development_velocity": {
+        "story_points_per_sprint": 42,
+        "target_points_per_sprint": 50,
+        "cycle_time_days": 3.5,
+        "lead_time_days": 7.2
+      },
+      "collaboration": {
+        "code_review_time_hours": 4,
+        "target_review_time_hours": 2,
+        "knowledge_sharing_sessions_per_month": 2,
+        "documentation_coverage": 0.85
+      },
+      "learning": {
+        "training_hours_per_month": 8,
+        "certification_completion_rate": 0.7,
+        "conference_attendance_per_year": 2
+      }
+    },
+    "business_value": {
+      "feature_adoption": {
+        "new_features_adopted": 0.8,
+        "user_satisfaction_score": 4.2,
+        "feature_usage_growth": 0.15
+      },
+      "innovation": {
+        "experiments_per_quarter": 6,
+        "successful_experiments_rate": 0.33,
+        "time_to_market_weeks": 8
+      },
+      "compliance": {
+        "audit_pass_rate": 1.0,
+        "policy_violations": 0,
+        "compliance_training_completion": 0.95
+      }
+    }
+  },
+  "thresholds": {
+    "green": {
+      "test_coverage": 90,
+      "deployment_success_rate": 98,
+      "uptime": 99.9,
+      "security_vulnerabilities_critical": 0,
+      "error_rate": 0.05
+    },
+    "yellow": {
+      "test_coverage": 80,
+      "deployment_success_rate": 95,
+      "uptime": 99.5,
+      "security_vulnerabilities_critical": 1,
+      "error_rate": 0.1
+    },
+    "red": {
+      "test_coverage": 70,
+      "deployment_success_rate": 90,
+      "uptime": 99.0,
+      "security_vulnerabilities_critical": 2,
+      "error_rate": 0.2
+    }
+  },
+  "automation": {
+    "metrics_collection": {
+      "frequency": "daily",
+      "sources": [
+        "github_api",
+        "prometheus", 
+        "sonarqube",
+        "security_scanners",
+        "deployment_logs"
+      ],
+      "last_collection": "2025-01-01T00:00:00Z"
+    },
+    "reporting": {
+      "dashboard_url": "https://grafana.example.com/d/project-metrics",
+      "slack_notifications": true,
+      "email_reports": true,
+      "frequency": "weekly"
+    },
+    "alerts": {
+      "enabled": true,
+      "channels": ["slack", "email", "pagerduty"],
+      "rules": [
+        {
+          "metric": "test_coverage",
+          "condition": "< 80",
+          "severity": "warning"
+        },
+        {
+          "metric": "security_vulnerabilities_critical", 
+          "condition": "> 0",
+          "severity": "critical"
+        },
+        {
+          "metric": "deployment_success_rate",
+          "condition": "< 95",
+          "severity": "warning"
+        }
+      ]
+    }
+  },
+  "goals": {
+    "2025_q1": {
+      "test_coverage": 95,
+      "deployment_frequency_per_week": 10,
+      "security_vulnerabilities_total": 0,
+      "model_accuracy": 0.95,
+      "inference_latency_ms": 30
+    },
+    "2025_q2": {
+      "test_coverage": 98,
+      "deployment_frequency_per_week": 15,
+      "mttr_minutes": 10,
+      "gpu_utilization": 0.90,
+      "cost_optimization": 0.15
+    }
+  },
+  "benchmarks": {
+    "industry_standards": {
+      "test_coverage": 80,
+      "deployment_frequency": "daily",
+      "mttr_minutes": 60,
+      "uptime": 99.9
+    },
+    "internal_targets": {
+      "test_coverage": 95,
+      "deployment_frequency": "multiple_daily", 
+      "mttr_minutes": 15,
+      "uptime": 99.95
+    }
+  }
+}
