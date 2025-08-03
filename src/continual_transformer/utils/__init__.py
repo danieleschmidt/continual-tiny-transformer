@@ -1,3 +1,13 @@
-"""Utility functions and helpers."""
+"""Utility functions for continual learning."""
 
-__all__ = []
+from .knowledge_distillation import (
+    KnowledgeDistillation,
+    ProgressiveKnowledgeDistillation,
+    MemoryReplay
+)
+
+__all__ = [
+    "KnowledgeDistillation",
+    "ProgressiveKnowledgeDistillation", 
+    "MemoryReplay"
+]
