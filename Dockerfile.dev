@@ -1,0 +1,45 @@
+# Development Dockerfile for Continual Tiny Transformer
+FROM python:3.10-slim
+
+# Set working directory
+WORKDIR /workspace
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN useradd -m -s /bin/bash vscode \
+    && echo "vscode ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Install Python dependencies
+COPY requirements.txt requirements-dev.txt ./
+RUN pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
+
+# Install additional development tools
+RUN pip install --no-cache-dir \
+    jupyterlab \
+    notebook \
+    tensorboard \
+    wandb \
+    pre-commit
+
+# Set up pre-commit (will be configured by setup script)
+RUN git config --global --add safe.directory /workspace
+
+# Switch to non-root user
+USER vscode
+
+# Create cache directories
+RUN mkdir -p /workspace/.cache/huggingface \
+    && mkdir -p /workspace/.cache/torch \
+    && mkdir -p /workspace/.cache/wandb
+
+# Expose ports for Jupyter and TensorBoard
+EXPOSE 8888 6006
+
+# Default command
+CMD ["bash"]

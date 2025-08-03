@@ -1,5 +1,17 @@
-"""Adaptation mechanisms for continual learning."""
+"""Adapter modules for task-specific adaptations."""
 
-from continual_transformer.adapters.activation import ActivationAdapter
+from .activation import (
+    ActivationAdapter,
+    MultiLayerActivationAdapter,
+    AttentionAdapter,
+    HyperAdapter,
+    create_adapter
+)
 
-__all__ = ["ActivationAdapter"]
+__all__ = [
+    "ActivationAdapter",
+    "MultiLayerActivationAdapter", 
+    "AttentionAdapter",
+    "HyperAdapter",
+    "create_adapter"
+]

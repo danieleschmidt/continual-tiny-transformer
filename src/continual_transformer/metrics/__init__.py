@@ -1,5 +1,13 @@
 """Evaluation metrics for continual learning."""
 
-from continual_transformer.metrics.evaluation import ContinualMetrics
+from .continual_metrics import (
+    ContinualMetrics,
+    ContinualLearningMetrics,
+    TaskMetrics
+)
 
-__all__ = ["ContinualMetrics"]
+__all__ = [
+    "ContinualMetrics",
+    "ContinualLearningMetrics", 
+    "TaskMetrics"
+]

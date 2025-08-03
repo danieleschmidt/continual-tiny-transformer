@@ -1,6 +1,5 @@
-"""Task management utilities."""
+"""Task management for continual learning."""
 
-from continual_transformer.tasks.manager import TaskManager
-from continual_transformer.tasks.task import Task
+from .manager import TaskManager, Task, TaskType, TaskStatus
 
-__all__ = ["TaskManager", "Task"]
+__all__ = ["TaskManager", "Task", "TaskType", "TaskStatus"]
