@@ -12,7 +12,7 @@ hypothesis>=6.54.0,<7.0.0
 
 # Code Quality & Formatting
 black>=22.0.0,<26.0.0
-isort>=5.10.0,<6.0.0
+isort>=5.10.0,<7.0.0
 ruff>=0.1.0,<1.0.0
 mypy>=1.0.0,<2.0.0
 bandit>=1.7.0,<2.0.0
