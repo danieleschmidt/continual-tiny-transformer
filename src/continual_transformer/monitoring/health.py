@@ -397,3 +397,280 @@ class PeriodicHealthChecker:
                 print(f"Health check error: {e}")
             
             time.sleep(self.interval_seconds)
+
+
+class RobustHealthMonitor:
+    """Enhanced health monitor with advanced error handling and recovery."""
+    
+    def __init__(self, config=None):
+        self.config = config
+        self.health_checker = HealthChecker()
+        self.periodic_checker = None
+        
+        # Error tracking
+        self.error_history = []
+        self.max_error_history = 100
+        self.consecutive_failures = 0
+        self.max_consecutive_failures = 5
+        
+        # Performance metrics
+        self.performance_stats = {
+            "task_durations": [],
+            "memory_peaks": [],
+            "error_counts": {},
+            "recovery_times": []
+        }
+        
+        # Circuit breaker for health checks
+        self.health_check_disabled = False
+        self.last_health_check_failure = None
+        self.health_check_failure_threshold = 3
+    
+    def start_monitoring(self, interval_seconds: int = 60):
+        """Start comprehensive monitoring."""
+        try:
+            if self.periodic_checker is None:
+                self.periodic_checker = PeriodicHealthChecker(
+                    self.health_checker, 
+                    interval_seconds
+                )
+            self.periodic_checker.start()
+            print(f"✅ Health monitoring started (interval: {interval_seconds}s)")
+        except Exception as e:
+            self._record_error("monitoring_start_failed", str(e))
+            print(f"❌ Failed to start health monitoring: {e}")
+    
+    def stop_monitoring(self):
+        """Stop monitoring safely."""
+        try:
+            if self.periodic_checker:
+                self.periodic_checker.stop()
+            print("✅ Health monitoring stopped")
+        except Exception as e:
+            self._record_error("monitoring_stop_failed", str(e))
+            print(f"⚠️  Error stopping monitoring: {e}")
+    
+    def safe_health_check(self, model=None) -> Dict[str, Any]:
+        """Perform health check with error handling and recovery."""
+        if self.health_check_disabled:
+            return {
+                "status": "DISABLED",
+                "message": "Health checks disabled due to consecutive failures",
+                "last_failure": self.last_health_check_failure
+            }
+        
+        try:
+            checks = self.health_checker.comprehensive_health_check(model)
+            overall_status = self.health_checker.get_overall_status(checks)
+            
+            # Reset failure count on success
+            self.consecutive_failures = 0
+            
+            return {
+                "status": overall_status.value.upper(),
+                "checks": {
+                    name: {
+                        "status": check.status.value,
+                        "message": check.message,
+                        "duration_ms": check.duration_ms,
+                        "details": check.details
+                    }
+                    for name, check in checks.items()
+                },
+                "summary": self.health_checker.get_health_summary()
+            }
+            
+        except Exception as e:
+            self.consecutive_failures += 1
+            self.last_health_check_failure = str(e)
+            
+            error_msg = f"Health check failed: {e}"
+            self._record_error("health_check_failed", error_msg)
+            
+            # Disable health checks if too many consecutive failures
+            if self.consecutive_failures >= self.health_check_failure_threshold:
+                self.health_check_disabled = True
+                print(f"❌ Disabling health checks after {self.consecutive_failures} failures")
+            
+            return {
+                "status": "ERROR",
+                "message": error_msg,
+                "consecutive_failures": self.consecutive_failures
+            }
+    
+    def record_task_performance(self, task_id: str, duration_seconds: float, success: bool = True):
+        """Record task performance metrics."""
+        try:
+            self.performance_stats["task_durations"].append({
+                "task_id": task_id,
+                "duration": duration_seconds,
+                "success": success,
+                "timestamp": datetime.now()
+            })
+            
+            # Track memory peak during task
+            try:
+                if torch.cuda.is_available():
+                    peak_memory = torch.cuda.max_memory_allocated() / (1024**2)  # MB
+                    self.performance_stats["memory_peaks"].append(peak_memory)
+            except Exception:
+                pass  # Non-critical error
+                
+            # Maintain reasonable history size
+            if len(self.performance_stats["task_durations"]) > 1000:
+                self.performance_stats["task_durations"] = self.performance_stats["task_durations"][-500:]
+                
+        except Exception as e:
+            self._record_error("performance_recording_failed", str(e))
+    
+    def get_performance_summary(self) -> Dict[str, Any]:
+        """Get performance statistics summary."""
+        try:
+            durations = self.performance_stats["task_durations"]
+            if not durations:
+                return {"message": "No performance data available"}
+            
+            # Calculate statistics
+            successful_tasks = [d for d in durations if d["success"]]
+            failed_tasks = [d for d in durations if not d["success"]]
+            
+            avg_duration = sum(d["duration"] for d in successful_tasks) / len(successful_tasks) if successful_tasks else 0
+            max_duration = max(d["duration"] for d in durations)
+            min_duration = min(d["duration"] for d in durations)
+            
+            success_rate = len(successful_tasks) / len(durations) * 100
+            
+            # Memory stats
+            memory_peaks = self.performance_stats["memory_peaks"]
+            avg_memory = sum(memory_peaks) / len(memory_peaks) if memory_peaks else 0
+            max_memory = max(memory_peaks) if memory_peaks else 0
+            
+            return {
+                "total_tasks": len(durations),
+                "successful_tasks": len(successful_tasks),
+                "failed_tasks": len(failed_tasks),
+                "success_rate_percent": success_rate,
+                "duration_stats": {
+                    "average_seconds": avg_duration,
+                    "max_seconds": max_duration,
+                    "min_seconds": min_duration
+                },
+                "memory_stats": {
+                    "average_peak_mb": avg_memory,
+                    "max_peak_mb": max_memory
+                },
+                "error_summary": dict(self.performance_stats["error_counts"])
+            }
+            
+        except Exception as e:
+            self._record_error("performance_summary_failed", str(e))
+            return {"error": f"Failed to generate performance summary: {e}"}
+    
+    def _record_error(self, error_type: str, error_message: str):
+        """Record error with timestamp and categorization."""
+        try:
+            error_record = {
+                "type": error_type,
+                "message": error_message,
+                "timestamp": datetime.now(),
+                "thread_id": threading.current_thread().ident
+            }
+            
+            self.error_history.append(error_record)
+            
+            # Update error counts
+            if error_type in self.performance_stats["error_counts"]:
+                self.performance_stats["error_counts"][error_type] += 1
+            else:
+                self.performance_stats["error_counts"][error_type] = 1
+            
+            # Maintain error history size
+            if len(self.error_history) > self.max_error_history:
+                self.error_history = self.error_history[-50:]  # Keep last 50
+                
+        except Exception:
+            # If we can't even record errors, just print to console
+            print(f"CRITICAL: Failed to record error - {error_type}: {error_message}")
+    
+    def get_error_report(self) -> Dict[str, Any]:
+        """Get comprehensive error report."""
+        try:
+            recent_errors = self.error_history[-10:] if self.error_history else []
+            
+            # Group errors by type
+            error_groups = {}
+            for error in self.error_history:
+                error_type = error["type"]
+                if error_type not in error_groups:
+                    error_groups[error_type] = []
+                error_groups[error_type].append(error)
+            
+            return {
+                "total_errors": len(self.error_history),
+                "error_types": list(self.performance_stats["error_counts"].keys()),
+                "recent_errors": [
+                    {
+                        "type": e["type"],
+                        "message": e["message"],
+                        "timestamp": e["timestamp"].isoformat()
+                    }
+                    for e in recent_errors
+                ],
+                "error_counts": dict(self.performance_stats["error_counts"]),
+                "consecutive_failures": self.consecutive_failures,
+                "health_checks_disabled": self.health_check_disabled
+            }
+            
+        except Exception as e:
+            return {"error": f"Failed to generate error report: {e}"}
+    
+    def reset_health_monitoring(self):
+        """Reset health monitoring state (for recovery)."""
+        try:
+            self.health_check_disabled = False
+            self.consecutive_failures = 0
+            self.last_health_check_failure = None
+            print("✅ Health monitoring reset")
+        except Exception as e:
+            print(f"❌ Failed to reset health monitoring: {e}")
+    
+    def export_diagnostics(self, filepath: str):
+        """Export comprehensive diagnostics report."""
+        try:
+            diagnostics = {
+                "generated_at": datetime.now().isoformat(),
+                "health_status": self.safe_health_check(),
+                "performance_summary": self.get_performance_summary(),
+                "error_report": self.get_error_report(),
+                "system_info": {
+                    "python_version": sys.version,
+                    "torch_version": torch.__version__ if 'torch' in sys.modules else "Not loaded",
+                    "cuda_available": torch.cuda.is_available() if 'torch' in sys.modules else False
+                }
+            }
+            
+            with open(filepath, 'w') as f:
+                json.dump(diagnostics, f, indent=2, default=str)
+            
+            print(f"✅ Diagnostics exported to {filepath}")
+            
+        except Exception as e:
+            error_msg = f"Failed to export diagnostics: {e}"
+            self._record_error("diagnostics_export_failed", error_msg)
+            print(f"❌ {error_msg}")
+    
+    def __enter__(self):
+        """Context manager entry."""
+        self.start_monitoring()
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit with error tracking."""
+        if exc_type is not None:
+            self._record_error(exc_type.__name__, str(exc_val))
+        self.stop_monitoring()
+
+
+# Add necessary imports
+import sys
+import json
