@@ -520,6 +520,91 @@ class MemoryReplayDataLoader:
         logger.info(f"Cleared memory for task: {task_id or 'all tasks'}")
 
 
+def create_dataloader(
+    data_path: str,
+    batch_size: int = 16,
+    tokenizer_name: str = "distilbert-base-uncased",
+    max_length: int = 512,
+    split: str = "train",
+    shuffle: Optional[bool] = None,
+    task_id: Optional[str] = None
+) -> DataLoader:
+    """Create a DataLoader from data file."""
+    from transformers import AutoTokenizer
+    
+    # Load tokenizer
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
+    
+    # Load data
+    data_path = Path(data_path)
+    if not data_path.exists():
+        raise FileNotFoundError(f"Data file not found: {data_path}")
+    
+    with open(data_path, 'r') as f:
+        if data_path.suffix == '.json':
+            data = json.load(f)
+            if isinstance(data, dict) and split in data:
+                data = data[split]
+        else:
+            # Assume JSONL format
+            data = [json.loads(line) for line in f]
+    
+    if not data:
+        raise ValueError(f"No data found in {data_path}")
+    
+    # Infer task_id if not provided
+    if task_id is None:
+        task_id = data_path.stem
+    
+    # Create label mapping if labels are strings
+    label_mapping = None
+    labels = [item.get('label') for item in data if 'label' in item]
+    if labels and isinstance(labels[0], str):
+        unique_labels = sorted(set(labels))
+        label_mapping = {label: i for i, label in enumerate(unique_labels)}
+    
+    # Create dataset
+    dataset = TaskDataset(
+        data=data,
+        task_id=task_id,
+        tokenizer=tokenizer,
+        max_length=max_length,
+        label_mapping=label_mapping
+    )
+    
+    # Default shuffle behavior
+    if shuffle is None:
+        shuffle = (split == "train")
+    
+    # Create dataloader
+    dataloader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=shuffle,
+        num_workers=0,  # Keep simple for CLI
+        collate_fn=lambda batch: _collate_fn_simple(batch)
+    )
+    
+    return dataloader
+
+
+def _collate_fn_simple(batch: List[Dict[str, Any]]) -> Dict[str, torch.Tensor]:
+    """Simple collate function for CLI usage."""
+    if not batch:
+        return {}
+    
+    collated = {}
+    for key in batch[0].keys():
+        if isinstance(batch[0][key], torch.Tensor):
+            collated[key] = torch.stack([item[key] for item in batch])
+        elif key == 'task_id':
+            collated[key] = batch[0][key]  # Same for all items in batch
+        else:
+            collated[key] = [item[key] for item in batch]
+    
+    return collated
+
+
 def create_synthetic_task_data(
     task_id: str,
     num_samples: int = 1000,
