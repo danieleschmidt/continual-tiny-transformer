@@ -373,6 +373,138 @@ class HyperAdapter(nn.Module):
         return output
 
 
+class AdaptiveActivationAdapter(nn.Module):
+    """Self-adapting activation adapter that learns optimal architecture."""
+    
+    def __init__(
+        self,
+        hidden_size: int,
+        adapter_size: int = 64,
+        num_expert_layers: int = 4,
+        dropout_prob: float = 0.1
+    ):
+        super().__init__()
+        self.hidden_size = hidden_size
+        self.adapter_size = adapter_size
+        self.num_expert_layers = num_expert_layers
+        
+        # Mixture of experts for adaptive routing
+        self.expert_layers = nn.ModuleList([
+            nn.Sequential(
+                nn.Linear(hidden_size, adapter_size),
+                nn.GELU(),
+                nn.Dropout(dropout_prob),
+                nn.Linear(adapter_size, hidden_size)
+            ) for _ in range(num_expert_layers)
+        ])
+        
+        # Gating network to select experts
+        self.gate = nn.Linear(hidden_size, num_expert_layers)
+        
+        # Adaptive normalization
+        self.adaptive_norm = nn.AdaptiveLayerNorm(hidden_size)
+        
+        # Temperature parameter for expert selection
+        self.temperature = nn.Parameter(torch.ones(1))
+        
+        self._init_weights()
+    
+    def _init_weights(self):
+        """Initialize adaptive adapter weights."""
+        for expert in self.expert_layers:
+            for layer in expert:
+                if isinstance(layer, nn.Linear):
+                    nn.init.normal_(layer.weight, mean=0.0, std=0.02)
+                    nn.init.zeros_(layer.bias)
+                    # Last layer in each expert should be close to zero
+                    if layer == expert[-1]:
+                        nn.init.zeros_(layer.weight)
+        
+        nn.init.normal_(self.gate.weight, mean=0.0, std=0.02)
+        nn.init.zeros_(self.gate.bias)
+        nn.init.constant_(self.temperature, 1.0)
+    
+    def forward(self, hidden_states: torch.Tensor) -> torch.Tensor:
+        """Apply adaptive expert selection."""
+        batch_size, seq_len, hidden_size = hidden_states.shape
+        residual = hidden_states
+        
+        # Compute gating scores
+        pooled = hidden_states.mean(dim=1)  # [batch_size, hidden_size]
+        gate_logits = self.gate(pooled) / self.temperature  # [batch_size, num_experts]
+        gate_probs = F.softmax(gate_logits, dim=-1)  # [batch_size, num_experts]
+        
+        # Apply experts and combine with gating
+        expert_outputs = []
+        for expert in self.expert_layers:
+            expert_out = expert(hidden_states)  # [batch_size, seq_len, hidden_size]
+            expert_outputs.append(expert_out)
+        
+        # Stack expert outputs
+        expert_stack = torch.stack(expert_outputs, dim=-1)  # [batch_size, seq_len, hidden_size, num_experts]
+        
+        # Weighted combination using gating
+        gate_probs_expanded = gate_probs.unsqueeze(1).unsqueeze(1)  # [batch_size, 1, 1, num_experts]
+        combined_output = (expert_stack * gate_probs_expanded).sum(dim=-1)  # [batch_size, seq_len, hidden_size]
+        
+        # Residual connection
+        output = residual + 0.1 * combined_output
+        
+        # Adaptive normalization
+        output = self.adaptive_norm(output)
+        
+        return output
+
+
+class LowRankAdapter(nn.Module):
+    """Low-rank adaptation (LoRA) style adapter with minimal parameters."""
+    
+    def __init__(
+        self,
+        hidden_size: int,
+        rank: int = 16,
+        alpha: float = 16.0,
+        dropout_prob: float = 0.1
+    ):
+        super().__init__()
+        self.hidden_size = hidden_size
+        self.rank = rank
+        self.alpha = alpha
+        self.scaling = alpha / rank
+        
+        # Low-rank decomposition: W = BA
+        self.lora_A = nn.Linear(hidden_size, rank, bias=False)
+        self.lora_B = nn.Linear(rank, hidden_size, bias=False)
+        
+        # Dropout
+        self.dropout = nn.Dropout(dropout_prob)
+        
+        # Layer normalization
+        self.layer_norm = nn.LayerNorm(hidden_size)
+        
+        self._init_weights()
+    
+    def _init_weights(self):
+        """Initialize LoRA weights."""
+        nn.init.kaiming_uniform_(self.lora_A.weight, a=math.sqrt(5))
+        nn.init.zeros_(self.lora_B.weight)
+    
+    def forward(self, hidden_states: torch.Tensor) -> torch.Tensor:
+        """Apply low-rank adaptation."""
+        residual = hidden_states
+        
+        # Apply low-rank transformation: x -> B(A(x))
+        lora_output = self.lora_B(self.dropout(self.lora_A(hidden_states)))
+        
+        # Scale and add residual
+        output = residual + self.scaling * lora_output
+        
+        # Layer normalization
+        output = self.layer_norm(output)
+        
+        return output
+
+
 def create_adapter(adapter_type: str, **kwargs) -> nn.Module:
     """Factory function to create different types of adapters."""
     if adapter_type == "activation":
@@ -383,5 +515,40 @@ def create_adapter(adapter_type: str, **kwargs) -> nn.Module:
         return AttentionAdapter(**kwargs)
     elif adapter_type == "hyper":
         return HyperAdapter(**kwargs)
+    elif adapter_type == "adaptive":
+        return AdaptiveActivationAdapter(**kwargs)
+    elif adapter_type == "lora":
+        return LowRankAdapter(**kwargs)
     else:
         raise ValueError(f"Unknown adapter type: {adapter_type}")
+
+
+# Fix for AdaptiveLayerNorm (custom implementation)
+class AdaptiveLayerNorm(nn.Module):
+    """Adaptive layer normalization with learnable parameters."""
+    
+    def __init__(self, hidden_size: int, eps: float = 1e-5):
+        super().__init__()
+        self.hidden_size = hidden_size
+        self.eps = eps
+        
+        # Learnable scale and shift parameters
+        self.scale = nn.Parameter(torch.ones(hidden_size))
+        self.shift = nn.Parameter(torch.zeros(hidden_size))
+        
+        # Adaptive parameters
+        self.adaptive_scale = nn.Parameter(torch.ones(1))
+        self.adaptive_shift = nn.Parameter(torch.zeros(1))
+    
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Apply adaptive layer normalization."""
+        mean = x.mean(dim=-1, keepdim=True)
+        std = x.std(dim=-1, keepdim=True)
+        
+        # Standard layer normalization
+        normalized = (x - mean) / (std + self.eps)
+        
+        # Apply learnable parameters with adaptive scaling
+        output = (self.adaptive_scale * self.scale) * normalized + (self.adaptive_shift + self.shift)
+        
+        return output

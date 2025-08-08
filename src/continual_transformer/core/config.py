@@ -63,6 +63,13 @@ class ContinualConfig:
     elastic_weight_consolidation: bool = True
     ewc_lambda: float = 1000.0
     
+    # Optimization features
+    enable_nas: bool = False
+    enable_monitoring: bool = True
+    enable_error_recovery: bool = True
+    enable_performance_optimization: bool = True
+    enable_knowledge_transfer: bool = True
+    
     def __post_init__(self):
         """Validate and process configuration after initialization."""
         # Validate adaptation method
