@@ -125,7 +125,7 @@ class AdapterSearchSpace:
 
 
 class NASOptimizer:
-    """Neural Architecture Search optimizer for adapter configurations."""
+    """Neural Architecture Search optimizer for adapter configurations with advanced research capabilities."""
     
     def __init__(self, model, config, search_strategy='evolutionary'):
         self.model = model
@@ -135,101 +135,198 @@ class NASOptimizer:
         # Search components
         self.search_space = AdapterSearchSpace()
         self.population = []
-        self.population_size = 20
-        self.num_generations = 10
+        self.population_size = 50  # Increased for better exploration
+        self.num_generations = 25  # More generations for research quality
         
-        # Performance tracking
+        # Advanced research features
+        self.multi_objective_optimization = True
+        self.pareto_front = []
+        self.diversity_preservation = True
+        self.adaptive_search_budget = True
+        
+        # Enhanced performance tracking for research
         self.search_history = []
         self.best_architectures = []
+        self.pareto_optimal_solutions = []
+        self.diversity_metrics = []
         
-        # Evaluation cache
+        # Advanced caching and reproducibility
         self.evaluation_cache = {}
+        self.experiment_seed = 42
+        self.reproducible_search = True
         
-    def search_optimal_architecture(self, task_id: str, train_data, val_data) -> Dict[str, Any]:
-        """Search for optimal adapter architecture for a specific task."""
+        # Research analytics
+        self.search_analytics = {
+            'convergence_history': [],
+            'diversity_evolution': [],
+            'hypervolume_progression': [],
+            'architecture_frequency': defaultdict(int)
+        }
         
-        logger.info(f"Starting NAS for task {task_id} using {self.search_strategy} strategy")
+    def search_optimal_architecture(self, task_id: str, train_data, val_data, research_mode=True) -> Dict[str, Any]:
+        """Search for optimal adapter architecture with research-grade rigor."""
+        
+        # Set random seed for reproducibility
+        if self.reproducible_search:
+            torch.manual_seed(self.experiment_seed)
+            np.random.seed(self.experiment_seed)
+            random.seed(self.experiment_seed)
+        
+        logger.info(f"Starting research-grade NAS for task {task_id} using {self.search_strategy} strategy")
+        logger.info(f"Search configuration: population={self.population_size}, generations={self.num_generations}")
+        
+        start_time = time.time()
         
         if self.search_strategy == 'evolutionary':
-            return self._evolutionary_search(task_id, train_data, val_data)
+            result = self._advanced_evolutionary_search(task_id, train_data, val_data, research_mode)
+        elif self.search_strategy == 'multi_objective':
+            result = self._multi_objective_search(task_id, train_data, val_data)
+        elif self.search_strategy == 'progressive':
+            result = self._progressive_search(task_id, train_data, val_data)
         elif self.search_strategy == 'random':
-            return self._random_search(task_id, train_data, val_data)
+            result = self._random_search(task_id, train_data, val_data)
         elif self.search_strategy == 'bayesian':
-            return self._bayesian_optimization(task_id, train_data, val_data)
+            result = self._bayesian_optimization(task_id, train_data, val_data)
         else:
             raise ValueError(f"Unknown search strategy: {self.search_strategy}")
-    
-    def _evolutionary_search(self, task_id: str, train_data, val_data) -> Dict[str, Any]:
-        """Evolutionary algorithm for architecture search."""
         
-        # Initialize population
+        search_time = time.time() - start_time
+        logger.info(f"NAS completed in {search_time:.2f} seconds")
+        
+        # Generate research report
+        if research_mode:
+            self._generate_research_report(task_id, search_time)
+        
+        return result
+    
+    def _advanced_evolutionary_search(self, task_id: str, train_data, val_data, research_mode=True) -> Dict[str, Any]:
+        """Advanced evolutionary algorithm with research-grade features."""
+        
+        # Initialize diverse population with advanced sampling
         self.population = []
-        for _ in range(self.population_size):
-            config = self.search_space.sample_architecture()
+        initialization_strategies = ['random', 'heuristic', 'diverse', 'elite_seeded']
+        
+        for i in range(self.population_size):
+            strategy = initialization_strategies[i % len(initialization_strategies)]
+            config = self._strategic_sample_architecture(strategy, task_id)
             candidate = self._evaluate_architecture(config, task_id, train_data, val_data)
             if candidate is not None:
                 self.population.append(candidate)
+                self.search_analytics['architecture_frequency'][json.dumps(config, sort_keys=True)] += 1
         
         best_candidate = None
+        stagnation_counter = 0
+        max_stagnation = 5
         
-        # Evolution loop
+        # Advanced evolution loop with research analytics
         for generation in range(self.num_generations):
             logger.info(f"Generation {generation + 1}/{self.num_generations}")
             
-            # Selection
-            self.population.sort(key=lambda x: x.score, reverse=True)
-            survivors = self.population[:self.population_size // 2]
+            # Multi-objective selection with Pareto ranking
+            if self.multi_objective_optimization:
+                ranked_population = self._pareto_ranking(self.population)
+                survivors = self._nsga_ii_selection(ranked_population, self.population_size // 2)
+            else:
+                self.population.sort(key=lambda x: x.score, reverse=True)
+                survivors = self.population[:self.population_size // 2]
             
-            # Track best candidate
-            if not best_candidate or survivors[0].score > best_candidate.score:
-                best_candidate = survivors[0]
+            # Track best candidate and convergence
+            current_best = survivors[0]
+            if not best_candidate or current_best.score > best_candidate.score:
+                best_candidate = current_best
+                stagnation_counter = 0
+            else:
+                stagnation_counter += 1
             
-            # Reproduction
+            # Record analytics
+            self._record_generation_analytics(generation, survivors)
+            
+            # Early termination for research efficiency
+            if research_mode and stagnation_counter >= max_stagnation:
+                logger.info(f"Early termination at generation {generation + 1} due to convergence")
+                break
+            
+            # Advanced reproduction with diversity preservation
             new_population = survivors.copy()
             
+            # Adaptive reproduction parameters based on generation
+            crossover_prob = max(0.6, 0.9 - generation * 0.01)
+            mutation_prob = min(0.4, 0.1 + generation * 0.01)
+            
             while len(new_population) < self.population_size:
-                # Tournament selection for parents
-                parent1 = self._tournament_selection(survivors)
-                parent2 = self._tournament_selection(survivors)
+                # Diversity-aware parent selection
+                if self.diversity_preservation:
+                    parent1, parent2 = self._diversity_aware_selection(survivors)
+                else:
+                    parent1 = self._tournament_selection(survivors)
+                    parent2 = self._tournament_selection(survivors)
                 
-                # Crossover
-                if random.random() < 0.8:  # Crossover probability
-                    child_config = self.search_space.crossover_architectures(
-                        parent1.config, parent2.config
-                    )
+                # Advanced crossover with multiple strategies
+                if random.random() < crossover_prob:
+                    crossover_strategy = random.choice(['uniform', 'two_point', 'semantic'])
+                    child_config = self._advanced_crossover(parent1.config, parent2.config, crossover_strategy)
                 else:
                     child_config = random.choice([parent1.config, parent2.config])
                 
-                # Mutation
-                if random.random() < 0.2:  # Mutation probability
-                    child_config = self.search_space.mutate_architecture(child_config)
+                # Adaptive mutation
+                if random.random() < mutation_prob:
+                    mutation_strength = self._adaptive_mutation_strength(generation)
+                    child_config = self._adaptive_mutate(child_config, mutation_strength)
                 
-                # Evaluate child
+                # Evaluate child with caching
                 child_candidate = self._evaluate_architecture(child_config, task_id, train_data, val_data)
                 if child_candidate is not None:
                     new_population.append(child_candidate)
+                    self.search_analytics['architecture_frequency'][json.dumps(child_config, sort_keys=True)] += 1
             
             self.population = new_population
             
-            # Log generation statistics
+            # Comprehensive generation statistics
             scores = [c.score for c in self.population]
+            performances = [c.performance for c in self.population]
+            efficiencies = [c.efficiency for c in self.population]
+            
+            diversity_score = self._calculate_population_diversity(self.population)
+            self.diversity_metrics.append(diversity_score)
+            
             logger.info(
                 f"Generation {generation + 1}: "
                 f"Best: {max(scores):.4f}, "
                 f"Mean: {np.mean(scores):.4f}, "
-                f"Std: {np.std(scores):.4f}"
+                f"Std: {np.std(scores):.4f}, "
+                f"Diversity: {diversity_score:.4f}"
             )
+            
+            # Research-grade logging
+            if research_mode:
+                logger.info(
+                    f"Performance - Mean: {np.mean(performances):.4f}, "
+                    f"Efficiency - Mean: {np.mean(efficiencies):.4f}"
+                )
         
-        # Record search results
-        self.search_history.append({
+        # Comprehensive search results with research metrics
+        search_result = {
             'task_id': task_id,
-            'strategy': 'evolutionary',
+            'strategy': 'advanced_evolutionary',
             'best_architecture': best_candidate.config if best_candidate else None,
             'best_score': best_candidate.score if best_candidate else 0.0,
-            'generations': self.num_generations
-        })
+            'best_performance': best_candidate.performance if best_candidate else 0.0,
+            'best_efficiency': best_candidate.efficiency if best_candidate else 0.0,
+            'generations': generation + 1,
+            'total_evaluations': len(self.evaluation_cache),
+            'convergence_generation': generation + 1 - stagnation_counter,
+            'final_diversity': self.diversity_metrics[-1] if self.diversity_metrics else 0.0,
+            'pareto_front_size': len(self.pareto_front),
+            'search_analytics': self.search_analytics.copy()
+        }
         
-        return best_candidate.config if best_candidate else self.search_space.sample_architecture()
+        self.search_history.append(search_result)
+        
+        # Store Pareto optimal solutions for research analysis
+        if self.multi_objective_optimization:
+            self.pareto_optimal_solutions.extend(self._extract_pareto_front(self.population))
+        
+        return best_candidate.config if best_candidate else self._get_research_baseline_architecture()
     
     def _random_search(self, task_id: str, train_data, val_data) -> Dict[str, Any]:
         """Random search for architecture optimization."""
@@ -303,12 +400,496 @@ class NASOptimizer:
         
         return best_candidate.config if best_candidate else self.search_space.sample_architecture()
     
-    def _tournament_selection(self, population: List[ArchitectureCandidate]) -> ArchitectureCandidate:
-        """Tournament selection for evolutionary algorithm."""
+    def _tournament_selection(self, population: List[ArchitectureCandidate], tournament_size=5) -> ArchitectureCandidate:
+        """Enhanced tournament selection with adaptive tournament size."""
         
-        tournament_size = 3
+        # Adaptive tournament size based on population diversity
+        if hasattr(self, 'diversity_metrics') and self.diversity_metrics:
+            current_diversity = self.diversity_metrics[-1]
+            tournament_size = max(2, int(tournament_size * (1.0 + current_diversity)))
+        
         tournament = random.sample(population, min(tournament_size, len(population)))
-        return max(tournament, key=lambda x: x.score)
+        
+        # Multi-objective tournament selection
+        if self.multi_objective_optimization:
+            return self._pareto_tournament_select(tournament)
+        else:
+            return max(tournament, key=lambda x: x.score)
+    
+    def _strategic_sample_architecture(self, strategy: str, task_id: str) -> Dict[str, Any]:
+        """Sample architecture using specific strategy for research diversity."""
+        
+        if strategy == 'random':
+            return self.search_space.sample_architecture()
+        elif strategy == 'heuristic':
+            # Use task-specific heuristics
+            base_config = self.search_space.sample_architecture()
+            base_config['adapter_size'] = 128  # Start with larger adapters
+            base_config['num_layers'] = 2
+            return base_config
+        elif strategy == 'diverse':
+            # Maximize diversity in population initialization
+            config = self.search_space.sample_architecture()
+            # Favor less common architecture types
+            rare_types = ['attention', 'lora', 'adaptive']
+            config['adapter_type'] = random.choice(rare_types)
+            return config
+        elif strategy == 'elite_seeded':
+            # Seed with known good architectures
+            if self.best_architectures:
+                base = random.choice(self.best_architectures).config.copy()
+                return self.search_space.mutate_architecture(base, mutation_rate=0.1)
+            else:
+                return self.search_space.sample_architecture()
+        
+        return self.search_space.sample_architecture()
+    
+    def _pareto_ranking(self, population: List[ArchitectureCandidate]) -> List[List[ArchitectureCandidate]]:
+        """Perform Pareto ranking for multi-objective optimization."""
+        
+        fronts = []
+        remaining = population.copy()
+        
+        while remaining:
+            current_front = []
+            dominated = []
+            
+            for candidate in remaining:
+                is_dominated = False
+                for other in remaining:
+                    if other != candidate and self._dominates(other, candidate):
+                        is_dominated = True
+                        break
+                
+                if not is_dominated:
+                    current_front.append(candidate)
+                else:
+                    dominated.append(candidate)
+            
+            fronts.append(current_front)
+            remaining = dominated
+            
+            if len(fronts) > 10:  # Prevent infinite loops
+                fronts.append(dominated)
+                break
+        
+        return fronts
+    
+    def _dominates(self, candidate1: ArchitectureCandidate, candidate2: ArchitectureCandidate) -> bool:
+        """Check if candidate1 dominates candidate2 in multi-objective space."""
+        
+        # Multi-objective comparison: performance, efficiency, complexity
+        objectives1 = [candidate1.performance, candidate1.efficiency, -candidate1.complexity / 1000.0]
+        objectives2 = [candidate2.performance, candidate2.efficiency, -candidate2.complexity / 1000.0]
+        
+        dominates = True
+        strictly_better = False
+        
+        for obj1, obj2 in zip(objectives1, objectives2):
+            if obj1 < obj2:
+                dominates = False
+                break
+            elif obj1 > obj2:
+                strictly_better = True
+        
+        return dominates and strictly_better
+    
+    def _nsga_ii_selection(self, fronts: List[List[ArchitectureCandidate]], num_select: int) -> List[ArchitectureCandidate]:
+        """NSGA-II selection mechanism for research-grade multi-objective optimization."""
+        
+        selected = []
+        
+        for front in fronts:
+            if len(selected) + len(front) <= num_select:
+                selected.extend(front)
+            else:
+                # Calculate crowding distance for the last front
+                remaining_slots = num_select - len(selected)
+                if remaining_slots > 0:
+                    crowding_distances = self._calculate_crowding_distance(front)
+                    # Sort by crowding distance (descending)
+                    sorted_front = sorted(zip(front, crowding_distances), 
+                                        key=lambda x: x[1], reverse=True)
+                    selected.extend([candidate for candidate, _ in sorted_front[:remaining_slots]])
+                break
+        
+        return selected
+    
+    def _calculate_crowding_distance(self, front: List[ArchitectureCandidate]) -> List[float]:
+        """Calculate crowding distance for diversity preservation."""
+        
+        if len(front) <= 2:
+            return [float('inf')] * len(front)
+        
+        distances = [0.0] * len(front)
+        
+        # Normalize objectives
+        objectives = ['performance', 'efficiency', 'complexity']
+        
+        for obj in objectives:
+            # Sort by objective
+            sorted_indices = sorted(range(len(front)), 
+                                  key=lambda i: getattr(front[i], obj))
+            
+            # Set boundary points to infinity
+            distances[sorted_indices[0]] = float('inf')
+            distances[sorted_indices[-1]] = float('inf')
+            
+            # Calculate objective range
+            obj_values = [getattr(front[i], obj) for i in sorted_indices]
+            obj_range = obj_values[-1] - obj_values[0]
+            
+            if obj_range > 0:
+                # Calculate crowding distance
+                for i in range(1, len(front) - 1):
+                    if distances[sorted_indices[i]] != float('inf'):
+                        distances[sorted_indices[i]] += (obj_values[i + 1] - obj_values[i - 1]) / obj_range
+        
+        return distances
+    
+    def _diversity_aware_selection(self, population: List[ArchitectureCandidate]) -> Tuple[ArchitectureCandidate, ArchitectureCandidate]:
+        """Select diverse parents to maintain population diversity."""
+        
+        parent1 = self._tournament_selection(population)
+        
+        # Find most diverse candidate from parent1
+        max_distance = -1
+        parent2 = None
+        
+        for candidate in population:
+            if candidate != parent1:
+                distance = self._architecture_distance(parent1.config, candidate.config)
+                if distance > max_distance:
+                    max_distance = distance
+                    parent2 = candidate
+        
+        if parent2 is None:
+            parent2 = self._tournament_selection(population)
+        
+        return parent1, parent2
+    
+    def _architecture_distance(self, config1: Dict[str, Any], config2: Dict[str, Any]) -> float:
+        """Calculate distance between two architecture configurations."""
+        
+        distance = 0.0
+        
+        # Compare categorical features
+        categorical_features = ['adapter_type', 'activation_function', 'normalization']
+        for feature in categorical_features:
+            if config1.get(feature) != config2.get(feature):
+                distance += 1.0
+        
+        # Compare numerical features
+        numerical_features = ['adapter_size', 'num_layers', 'dropout_prob']
+        for feature in numerical_features:
+            val1 = config1.get(feature, 0)
+            val2 = config2.get(feature, 0)
+            if isinstance(val1, (int, float)) and isinstance(val2, (int, float)):
+                normalized_diff = abs(val1 - val2) / max(abs(val1), abs(val2), 1.0)
+                distance += normalized_diff
+        
+        return distance
+    
+    def _advanced_crossover(self, parent1: Dict[str, Any], parent2: Dict[str, Any], strategy: str) -> Dict[str, Any]:
+        """Advanced crossover strategies for architecture optimization."""
+        
+        if strategy == 'uniform':
+            return self.search_space.crossover_architectures(parent1, parent2)
+        elif strategy == 'two_point':
+            # Two-point crossover
+            keys = list(set(parent1.keys()) | set(parent2.keys()))
+            if len(keys) <= 2:
+                return self.search_space.crossover_architectures(parent1, parent2)
+            
+            point1, point2 = sorted(random.sample(range(len(keys)), 2))
+            child = {}
+            
+            for i, key in enumerate(keys):
+                if i < point1 or i >= point2:
+                    child[key] = parent1.get(key, parent2.get(key))
+                else:
+                    child[key] = parent2.get(key, parent1.get(key))
+            
+            return child
+        elif strategy == 'semantic':
+            # Semantic crossover based on architecture similarity
+            child = parent1.copy()
+            
+            # Inherit similar components from more diverse parent
+            distance1 = sum(1 for key in parent1.keys() if key in parent2 and parent1[key] != parent2[key])
+            distance2 = sum(1 for key in parent2.keys() if key in parent1 and parent1[key] != parent2[key])
+            
+            diverse_parent = parent2 if distance2 > distance1 else parent1
+            
+            for key in diverse_parent:
+                if random.random() < 0.3:  # 30% chance to inherit from diverse parent
+                    child[key] = diverse_parent[key]
+            
+            return child
+        
+        return self.search_space.crossover_architectures(parent1, parent2)
+    
+    def _adaptive_mutation_strength(self, generation: int) -> float:
+        """Calculate adaptive mutation strength based on search progress."""
+        
+        # Start with high exploration, gradually increase exploitation
+        base_strength = max(0.1, 0.5 - generation * 0.02)
+        
+        # Increase mutation if population diversity is low
+        if self.diversity_metrics:
+            diversity_factor = 1.0 + (0.5 - self.diversity_metrics[-1])
+            base_strength *= diversity_factor
+        
+        return min(1.0, base_strength)
+    
+    def _adaptive_mutate(self, config: Dict[str, Any], mutation_strength: float) -> Dict[str, Any]:
+        """Adaptive mutation with strength-based parameter adjustment."""
+        
+        mutated_config = config.copy()
+        
+        for param in mutated_config.keys():
+            if random.random() < mutation_strength and param in self.search_space.search_dimensions:
+                choices = self.search_space.search_dimensions[param]
+                
+                if isinstance(mutated_config[param], (int, float)):
+                    # Gaussian mutation for numerical parameters
+                    current_val = mutated_config[param]
+                    std = mutation_strength * (max(choices) - min(choices)) * 0.1
+                    new_val = current_val + random.gauss(0, std)
+                    
+                    # Clamp to valid range
+                    new_val = max(min(choices), min(max(choices), new_val))
+                    if isinstance(current_val, int):
+                        new_val = int(round(new_val))
+                    
+                    mutated_config[param] = new_val
+                else:
+                    # Random mutation for categorical parameters
+                    mutated_config[param] = random.choice(choices)
+        
+        return mutated_config
+    
+    def _calculate_population_diversity(self, population: List[ArchitectureCandidate]) -> float:
+        """Calculate population diversity for research analytics."""
+        
+        if len(population) < 2:
+            return 0.0
+        
+        total_distance = 0.0
+        num_pairs = 0
+        
+        for i in range(len(population)):
+            for j in range(i + 1, len(population)):
+                distance = self._architecture_distance(population[i].config, population[j].config)
+                total_distance += distance
+                num_pairs += 1
+        
+        return total_distance / num_pairs if num_pairs > 0 else 0.0
+    
+    def _record_generation_analytics(self, generation: int, survivors: List[ArchitectureCandidate]):
+        """Record detailed analytics for research analysis."""
+        
+        scores = [c.score for c in survivors]
+        
+        generation_data = {
+            'generation': generation,
+            'best_score': max(scores),
+            'mean_score': np.mean(scores),
+            'std_score': np.std(scores),
+            'population_size': len(survivors),
+            'unique_architectures': len(set(json.dumps(c.config, sort_keys=True) for c in survivors))
+        }
+        
+        self.search_analytics['convergence_history'].append(generation_data)
+    
+    def _extract_pareto_front(self, population: List[ArchitectureCandidate]) -> List[ArchitectureCandidate]:
+        """Extract Pareto optimal solutions from population."""
+        
+        pareto_front = []
+        
+        for candidate in population:
+            is_dominated = False
+            for other in population:
+                if other != candidate and self._dominates(other, candidate):
+                    is_dominated = True
+                    break
+            
+            if not is_dominated:
+                pareto_front.append(candidate)
+        
+        return pareto_front
+    
+    def _get_research_baseline_architecture(self) -> Dict[str, Any]:
+        """Get research-grade baseline architecture."""
+        
+        return {
+            'adapter_type': 'activation',
+            'adapter_size': 64,
+            'num_layers': 2,
+            'activation_function': 'gelu',
+            'dropout_prob': 0.1,
+            'normalization': 'layer_norm',
+            'residual_connection': True,
+            'research_baseline': True
+        }
+    
+    def _pareto_tournament_select(self, tournament: List[ArchitectureCandidate]) -> ArchitectureCandidate:
+        """Tournament selection for multi-objective optimization."""
+        
+        # Find non-dominated solutions in tournament
+        non_dominated = []
+        
+        for candidate in tournament:
+            is_dominated = False
+            for other in tournament:
+                if other != candidate and self._dominates(other, candidate):
+                    is_dominated = True
+                    break
+            
+            if not is_dominated:
+                non_dominated.append(candidate)
+        
+        # Select from non-dominated solutions or fall back to best score
+        if non_dominated:
+            return random.choice(non_dominated)
+        else:
+            return max(tournament, key=lambda x: x.score)
+    
+    def _multi_objective_search(self, task_id: str, train_data, val_data) -> Dict[str, Any]:
+        """Multi-objective optimization for research applications."""
+        
+        # Initialize with NSGA-II algorithm
+        population = []
+        for _ in range(self.population_size):
+            config = self.search_space.sample_architecture()
+            candidate = self._evaluate_architecture(config, task_id, train_data, val_data)
+            if candidate is not None:
+                population.append(candidate)
+        
+        best_candidates = []
+        
+        for generation in range(self.num_generations):
+            # Pareto ranking and selection
+            fronts = self._pareto_ranking(population)
+            selected = self._nsga_ii_selection(fronts, self.population_size // 2)
+            
+            # Track Pareto front
+            if fronts:
+                current_front = fronts[0]
+                best_candidates.extend(current_front)
+                self.pareto_front = current_front
+            
+            # Generate new population
+            new_population = selected.copy()
+            
+            while len(new_population) < self.population_size:
+                parent1 = self._pareto_tournament_select(random.sample(selected, min(5, len(selected))))
+                parent2 = self._pareto_tournament_select(random.sample(selected, min(5, len(selected))))
+                
+                child_config = self._advanced_crossover(parent1.config, parent2.config, 'uniform')
+                
+                if random.random() < 0.2:
+                    child_config = self._adaptive_mutate(child_config, 0.2)
+                
+                child_candidate = self._evaluate_architecture(child_config, task_id, train_data, val_data)
+                if child_candidate is not None:
+                    new_population.append(child_candidate)
+            
+            population = new_population
+            
+            # Progress logging
+            if fronts:
+                front_scores = [c.score for c in fronts[0]]
+                logger.info(f"Generation {generation + 1}: Pareto front size: {len(fronts[0])}, "
+                          f"Best score: {max(front_scores):.4f}")
+        
+        # Return best overall solution
+        if best_candidates:
+            return max(best_candidates, key=lambda x: x.score).config
+        else:
+            return self._get_research_baseline_architecture()
+    
+    def _progressive_search(self, task_id: str, train_data, val_data) -> Dict[str, Any]:
+        """Progressive architecture search with increasing complexity."""
+        
+        complexity_levels = [
+            {'max_adapter_size': 32, 'max_layers': 1},
+            {'max_adapter_size': 64, 'max_layers': 2}, 
+            {'max_adapter_size': 128, 'max_layers': 3},
+            {'max_adapter_size': 256, 'max_layers': 4}
+        ]
+        
+        best_architecture = None
+        best_score = -1.0
+        
+        for level_idx, constraints in enumerate(complexity_levels):
+            logger.info(f"Progressive search level {level_idx + 1}: {constraints}")
+            
+            # Search with current complexity constraints
+            level_population = []
+            for _ in range(self.population_size // len(complexity_levels)):
+                config = self._constrained_sample_architecture(constraints)
+                candidate = self._evaluate_architecture(config, task_id, train_data, val_data)
+                if candidate is not None:
+                    level_population.append(candidate)
+            
+            # Find best in this level
+            if level_population:
+                level_best = max(level_population, key=lambda x: x.score)
+                if level_best.score > best_score:
+                    best_score = level_best.score
+                    best_architecture = level_best.config
+                    
+                logger.info(f"Level {level_idx + 1} best score: {level_best.score:.4f}")
+        
+        return best_architecture or self._get_research_baseline_architecture()
+    
+    def _constrained_sample_architecture(self, constraints: Dict[str, Any]) -> Dict[str, Any]:
+        """Sample architecture with complexity constraints."""
+        
+        config = self.search_space.sample_architecture()
+        
+        # Apply constraints
+        if 'max_adapter_size' in constraints:
+            valid_sizes = [s for s in self.search_space.search_dimensions['adapter_size'] 
+                          if s <= constraints['max_adapter_size']]
+            if valid_sizes:
+                config['adapter_size'] = random.choice(valid_sizes)
+        
+        if 'max_layers' in constraints:
+            valid_layers = [l for l in self.search_space.search_dimensions['num_layers'] 
+                           if l <= constraints['max_layers']]
+            if valid_layers:
+                config['num_layers'] = random.choice(valid_layers)
+        
+        return config
+    
+    def _generate_research_report(self, task_id: str, search_time: float):
+        """Generate comprehensive research report."""
+        
+        report = {
+            'experiment_info': {
+                'task_id': task_id,
+                'search_strategy': self.search_strategy,
+                'search_time_seconds': search_time,
+                'population_size': self.population_size,
+                'generations': self.num_generations,
+                'total_evaluations': len(self.evaluation_cache),
+                'experiment_seed': self.experiment_seed
+            },
+            'convergence_analysis': {
+                'convergence_history': self.search_analytics['convergence_history'],
+                'diversity_evolution': self.diversity_metrics,
+                'stagnation_points': []
+            },
+            'architecture_analysis': {
+                'architecture_frequency': dict(self.search_analytics['architecture_frequency']),
+                'pareto_optimal_count': len(self.pareto_optimal_solutions),
+                'unique_architectures_explored': len(self.evaluation_cache)
+            }
+        }
+        
+        logger.info(f\"Research report generated for task {task_id}\")"
     
     def _acquisition_function(self, candidates: List[ArchitectureCandidate]) -> Dict[str, Any]:
         """Acquisition function for Bayesian optimization."""
