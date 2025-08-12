@@ -1,0 +1,310 @@
+{
+  "timestamp": 1755037676.6741054,
+  "checks": {
+    "syntax": {
+      "score": 100.0,
+      "files_checked": 48,
+      "syntax_errors": [],
+      "status": "pass"
+    },
+    "imports": {
+      "score": 65,
+      "import_issues": [
+        {
+          "file": "/root/repo/src/continual_transformer/core/model.py",
+          "issue": "too_many_external_deps",
+          "count": 18
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/core/performance.py",
+          "issue": "too_many_external_deps",
+          "count": 20
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/optimization/memory_optimization.py",
+          "issue": "too_many_external_deps",
+          "count": 17
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/research/advanced_error_recovery.py",
+          "issue": "too_many_external_deps",
+          "count": 20
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/research/distributed_continual_learning.py",
+          "issue": "too_many_external_deps",
+          "count": 17
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/research/performance_optimization.py",
+          "issue": "too_many_external_deps",
+          "count": 29
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/research/security_validation.py",
+          "issue": "too_many_external_deps",
+          "count": 23
+        }
+      ],
+      "potential_circular_imports": [],
+      "status": "warning"
+    },
+    "code_structure": {
+      "score": 96,
+      "structure_issues": [
+        {
+          "file": "/root/repo/src/continual_transformer/i18n/localization.py",
+          "issue": "class_naming",
+          "class": "temp_locale"
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/tasks/manager.py",
+          "issue": "class_naming",
+          "class": "np"
+        }
+      ],
+      "complexity_issues": [],
+      "status": "pass"
+    },
+    "documentation": {
+      "score": 100.0,
+      "average_coverage": 1.0,
+      "files_with_module_docs": 37,
+      "total_files": 37,
+      "status": "pass"
+    },
+    "security": {
+      "score": 20,
+      "security_issues": [
+        {
+          "file": "/root/repo/src/continual_transformer/core/model.py",
+          "issue": "dangerous_eval_exec",
+          "severity": "high"
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/core/performance.py",
+          "issue": "dangerous_eval_exec",
+          "severity": "high"
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/deployment/__init__.py",
+          "issue": "dangerous_eval_exec",
+          "severity": "high"
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/optimization/auto_optimization.py",
+          "issue": "dangerous_eval_exec",
+          "severity": "high"
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/optimization/knowledge_transfer.py",
+          "issue": "dangerous_eval_exec",
+          "severity": "high"
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/optimization/neural_architecture_search.py",
+          "issue": "dangerous_eval_exec",
+          "severity": "high"
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/optimization/performance_optimizer.py",
+          "issue": "dangerous_eval_exec",
+          "severity": "high"
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/optimization/memory_optimization.py",
+          "issue": "dangerous_eval_exec",
+          "severity": "high"
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/research/performance_optimization.py",
+          "issue": "dangerous_eval_exec",
+          "severity": "high"
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/scaling/__init__.py",
+          "issue": "dangerous_eval_exec",
+          "severity": "high"
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/scaling/distributed_training.py",
+          "issue": "dangerous_eval_exec",
+          "severity": "high"
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/security/scanner.py",
+          "issue": "dangerous_eval_exec",
+          "severity": "high"
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/security/scanner.py",
+          "issue": "shell_injection_risk",
+          "severity": "medium"
+        }
+      ],
+      "security_features": 38,
+      "status": "fail"
+    },
+    "performance": {
+      "score": 67,
+      "performance_features": 69,
+      "performance_issues": [
+        {
+          "file": "/root/repo/src/continual_transformer/adapters/activation.py",
+          "issue": "many_loops",
+          "count": 25
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/core/error_recovery.py",
+          "issue": "many_loops",
+          "count": 27
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/core/model.py",
+          "issue": "many_loops",
+          "count": 45
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/core/performance.py",
+          "issue": "many_loops",
+          "count": 39
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/data/loaders.py",
+          "issue": "many_loops",
+          "count": 52
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/data/processors.py",
+          "issue": "many_loops",
+          "count": 32
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/data/storage.py",
+          "issue": "many_loops",
+          "count": 30
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/deployment/__init__.py",
+          "issue": "many_loops",
+          "count": 23
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/i18n/localization.py",
+          "issue": "many_loops",
+          "count": 24
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/metrics/continual_metrics.py",
+          "issue": "many_loops",
+          "count": 21
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/monitoring/health.py",
+          "issue": "many_loops",
+          "count": 21
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/monitoring/system_monitor.py",
+          "issue": "many_loops",
+          "count": 30
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/optimization/auto_optimization.py",
+          "issue": "many_loops",
+          "count": 30
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/optimization/knowledge_transfer.py",
+          "issue": "many_loops",
+          "count": 59
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/optimization/neural_architecture_search.py",
+          "issue": "many_loops",
+          "count": 90
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/optimization/performance_optimizer.py",
+          "issue": "many_loops",
+          "count": 24
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/optimization/memory_optimization.py",
+          "issue": "many_loops",
+          "count": 27
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/optimization/adaptive_learning.py",
+          "issue": "many_loops",
+          "count": 42
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/research/advanced_error_recovery.py",
+          "issue": "many_loops",
+          "count": 40
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/research/distributed_continual_learning.py",
+          "issue": "many_loops",
+          "count": 82
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/research/performance_optimization.py",
+          "issue": "many_loops",
+          "count": 60
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/research/security_validation.py",
+          "issue": "many_loops",
+          "count": 65
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/scaling/__init__.py",
+          "issue": "many_loops",
+          "count": 32
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/scaling/distributed_training.py",
+          "issue": "many_loops",
+          "count": 32
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/security/sanitizer.py",
+          "issue": "many_loops",
+          "count": 22
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/security/scanner.py",
+          "issue": "many_loops",
+          "count": 77
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/security/validator.py",
+          "issue": "many_loops",
+          "count": 33
+        },
+        {
+          "file": "/root/repo/src/continual_transformer/tasks/manager.py",
+          "issue": "many_loops",
+          "count": 25
+        }
+      ],
+      "status": "warning"
+    },
+    "test_coverage": {
+      "score": 29.411764705882355,
+      "test_files": 10,
+      "source_files": 34,
+      "coverage_ratio": 0.29411764705882354,
+      "status": "fail"
+    }
+  },
+  "overall_score": 76.7705882352941,
+  "recommendations": [
+    "Address security issues and add input validation",
+    "Consider performance optimizations for better efficiency",
+    "Add more tests to improve reliability",
+    "Good foundation - focus on polish and optimization"
+  ]
+}
