@@ -889,7 +889,9 @@ class NASOptimizer:
             }
         }
         
-        logger.info(f\"Research report generated for task {task_id}\")"
+        logger.info(f"Research report generated for task {task_id}")
+        
+        return report
     
     def _acquisition_function(self, candidates: List[ArchitectureCandidate]) -> Dict[str, Any]:
         """Acquisition function for Bayesian optimization."""
