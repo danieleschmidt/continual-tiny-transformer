@@ -1,0 +1,122 @@
+# Multi-stage Dockerfile for SDLC automation production deployment
+FROM python:3.11-slim as builder
+
+# Set build arguments
+ARG BUILD_VERSION=latest
+ARG BUILD_DATE
+ARG VCS_REF
+
+# Set labels for metadata
+LABEL org.label-schema.build-date=$BUILD_DATE \
+      org.label-schema.name="continual-transformer-sdlc" \
+      org.label-schema.description="Production SDLC automation for continual learning transformers" \
+      org.label-schema.version=$BUILD_VERSION \
+      org.label-schema.vcs-ref=$VCS_REF \
+      org.label-schema.vendor="Terragon Labs" \
+      org.label-schema.schema-version="1.0"
+
+# Install system dependencies for building
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    git \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements first for better Docker layer caching
+COPY requirements.txt requirements-dev.txt ./
+COPY pyproject.toml setup.py ./
+
+# Create virtual environment and install dependencies
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Upgrade pip and install wheel
+RUN pip install --upgrade pip setuptools wheel
+
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements-dev.txt
+
+# Copy source code
+COPY src/ src/
+COPY scripts/ scripts/
+COPY tests/ tests/
+
+# Install the package
+RUN pip install -e .
+
+# Build stage for security tools
+FROM builder as security-builder
+
+# Install additional security tools
+RUN pip install --no-cache-dir \
+    safety \
+    bandit \
+    pip-audit \
+    semgrep
+
+# Production stage
+FROM python:3.11-slim as production
+
+# Install runtime system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    git \
+    jq \
+    sqlite3 \
+    procps \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user for security
+RUN groupadd --gid 1000 sdlc \
+    && useradd --uid 1000 --gid sdlc --shell /bin/bash --create-home sdlc
+
+# Set working directory
+WORKDIR /app
+
+# Copy virtual environment from builder
+COPY --from=security-builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copy application code
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/tests ./tests
+COPY --from=builder /app/pyproject.toml ./
+
+# Create necessary directories with proper permissions
+RUN mkdir -p /app/data /app/logs /app/reports /app/tmp \
+    && chown -R sdlc:sdlc /app \
+    && chmod -R 755 /app/scripts
+
+# Set environment variables
+ENV PYTHONPATH="/app/src:$PYTHONPATH"
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV SDLC_HOME="/app"
+ENV SDLC_DATA_DIR="/app/data"
+ENV SDLC_LOG_DIR="/app/logs"
+ENV SDLC_REPORT_DIR="/app/reports"
+ENV SDLC_TMP_DIR="/app/tmp"
+
+# Health check script
+COPY deployment/docker/healthcheck.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/healthcheck.sh
+
+# Switch to non-root user
+USER sdlc
+
+# Expose ports
+EXPOSE 8000 8001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD /usr/local/bin/healthcheck.sh
+
+# Default command
+CMD ["python", "scripts/sdlc_automation.py", ".", "monitor"]

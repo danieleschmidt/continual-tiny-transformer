@@ -1,0 +1,364 @@
+# Kubernetes deployment for SDLC automation
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: continual-transformer-sdlc
+  labels:
+    name: continual-transformer-sdlc
+    component: automation
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sdlc-config
+  namespace: continual-transformer-sdlc
+  labels:
+    app: sdlc-automation
+    component: config
+data:
+  automation_config.yml: |
+    automation_level: "fully_auto"
+    triggers: ["file_change", "schedule", "api_call"]
+    max_concurrent: 8
+    retry_failed: true
+    monitoring_interval: 30
+    security_level: "strict"
+    optimization_strategy: "intelligent"
+    max_workers: 6
+    ci_timeout: 1800
+    deploy_timeout: 3600
+    log_level: "INFO"
+    
+    # Security settings
+    fail_on_critical: true
+    fail_on_high: false
+    
+    # Monitoring settings
+    alert_thresholds:
+      failure_rate_threshold: 15.0
+      avg_duration_threshold: 900.0
+      cpu_threshold: 80.0
+      memory_threshold: 85.0
+    
+    # Performance settings
+    resource_limits:
+      cpu_limit: "2000m"
+      memory_limit: "4Gi"
+      storage_limit: "10Gi"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sdlc-secrets
+  namespace: continual-transformer-sdlc
+  labels:
+    app: sdlc-automation
+    component: secrets
+type: Opaque
+data:
+  # Base64 encoded secrets (replace with actual values)
+  database-url: cG9zdGdyZXNxbDovL3VzZXI6cGFzc3dvcmRAbG9jYWxob3N0OjU0MzIvZGI=
+  api-token: c2stdGVzdC0xMjM0NTY3ODkwYWJjZGVmMTIzNDU2Nzg5MGFiY2RlZg==
+  webhook-secret: d2ViaG9va19zZWNyZXRfa2V5XzEyMzQ1Njc4OTA=
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sdlc-data-pvc
+  namespace: continual-transformer-sdlc
+  labels:
+    app: sdlc-automation
+    component: storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: fast-ssd
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sdlc-automation-service
+  namespace: continual-transformer-sdlc
+  labels:
+    app: sdlc-automation
+    component: service
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+      protocol: TCP
+    - name: metrics
+      port: 8001
+      targetPort: 8001
+      protocol: TCP
+  selector:
+    app: sdlc-automation
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sdlc-automation
+  namespace: continual-transformer-sdlc
+  labels:
+    app: sdlc-automation
+    version: v1.0.0
+    component: automation
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: sdlc-automation
+  template:
+    metadata:
+      labels:
+        app: sdlc-automation
+        version: v1.0.0
+        component: automation
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8001"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: sdlc-automation-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+      - name: sdlc-automation
+        image: continual-transformer-sdlc:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        - containerPort: 8001
+          name: metrics
+          protocol: TCP
+        env:
+        - name: SDLC_HOME
+          value: "/app"
+        - name: SDLC_DATA_DIR
+          value: "/app/data"
+        - name: SDLC_LOG_DIR
+          value: "/app/logs"
+        - name: SDLC_CONFIG_FILE
+          value: "/app/config/automation_config.yml"
+        - name: PYTHONPATH
+          value: "/app/src"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: sdlc-secrets
+              key: database-url
+        - name: API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: sdlc-secrets
+              key: api-token
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+            ephemeral-storage: "1Gi"
+          limits:
+            cpu: "2000m"
+            memory: "4Gi"
+            ephemeral-storage: "5Gi"
+        volumeMounts:
+        - name: data-volume
+          mountPath: /app/data
+        - name: config-volume
+          mountPath: /app/config
+          readOnly: true
+        - name: tmp-volume
+          mountPath: /app/tmp
+        livenessProbe:
+          exec:
+            command:
+            - /usr/local/bin/healthcheck.sh
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          exec:
+            command:
+            - /usr/local/bin/healthcheck.sh
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        startupProbe:
+          exec:
+            command:
+            - /usr/local/bin/healthcheck.sh
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 12
+          successThreshold: 1
+      volumes:
+      - name: data-volume
+        persistentVolumeClaim:
+          claimName: sdlc-data-pvc
+      - name: config-volume
+        configMap:
+          name: sdlc-config
+          defaultMode: 0644
+      - name: tmp-volume
+        emptyDir:
+          sizeLimit: "1Gi"
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - sdlc-automation
+              topologyKey: kubernetes.io/hostname
+      tolerations:
+      - key: "automation-workload"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sdlc-automation-sa
+  namespace: continual-transformer-sdlc
+  labels:
+    app: sdlc-automation
+    component: serviceaccount
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: sdlc-automation-role
+  namespace: continual-transformer-sdlc
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "configmaps", "secrets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: sdlc-automation-rolebinding
+  namespace: continual-transformer-sdlc
+subjects:
+- kind: ServiceAccount
+  name: sdlc-automation-sa
+  namespace: continual-transformer-sdlc
+roleRef:
+  kind: Role
+  name: sdlc-automation-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: sdlc-automation-netpol
+  namespace: continual-transformer-sdlc
+spec:
+  podSelector:
+    matchLabels:
+      app: sdlc-automation
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 8001
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-system
+    ports:
+    - protocol: TCP
+      port: 8000
+  egress:
+  - {} # Allow all outbound traffic
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: sdlc-automation-pdb
+  namespace: continual-transformer-sdlc
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: sdlc-automation
+---
+# Horizontal Pod Autoscaler
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: sdlc-automation-hpa
+  namespace: continual-transformer-sdlc
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: sdlc-automation
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
