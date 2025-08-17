@@ -274,3 +274,4 @@ performance_logs/
 
 # Development tools
 .pre-commit-config.yaml.bak
+cache/
