@@ -65,7 +65,7 @@ slowapi==0.1.9
 python-multipart==0.0.6
 
 # SSL/TLS
-certifi==2023.11.17
+certifi==2025.8.3
 
 # Process management
 supervisor==4.2.5
