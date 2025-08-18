@@ -2,7 +2,7 @@
 # Optimized for GPU inference and production deployment
 
 # Stage 1: Base image with CUDA and Python
-FROM nvidia/cuda:11.8-devel-ubuntu20.04 as base
+FROM nvidia/cuda:12.9.1-devel-ubuntu20.04 as base
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
