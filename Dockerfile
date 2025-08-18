@@ -2,7 +2,7 @@
 # Optimized for both development and production deployments
 
 # Build stage - compile dependencies and prepare application
-FROM python:3.13-slim as builder
+FROM python:3.13.7-slim as builder
 
 # Set build arguments
 ARG DEBIAN_FRONTEND=noninteractive
@@ -48,7 +48,7 @@ COPY . .
 RUN pip install -e .
 
 # Production stage - minimal runtime image
-FROM python:3.13-slim as production
+FROM python:3.13.7-slim as production
 
 # Set runtime arguments
 ARG DEBIAN_FRONTEND=noninteractive
