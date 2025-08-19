@@ -56,7 +56,7 @@ memory-profiler==0.61.0
 pympler==1.1
 
 # Production WSGI server
-gevent==23.9.1
+gevent==25.5.1
 
 # Rate limiting
 slowapi==0.1.9
