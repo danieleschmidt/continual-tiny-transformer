@@ -31,7 +31,7 @@ msgpack==1.0.7
 
 # Background tasks
 celery==5.3.4
-redis==5.0.1
+redis==6.4.0
 
 # Database (if needed)
 sqlalchemy==2.0.23
