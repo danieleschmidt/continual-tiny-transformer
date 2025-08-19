@@ -1,8 +1,9 @@
+```
 # Production requirements for Continual Transformer
 # Core API framework
 fastapi==0.116.1
 uvicorn[standard]==0.35.0
-gunicorn==21.2.0
+gunicorn==23.0.0
 
 # Monitoring and metrics
 prometheus-client==0.22.1
@@ -72,3 +73,4 @@ supervisor==4.2.5
 
 # Health checks
 py-healthcheck==1.10.1
+```
