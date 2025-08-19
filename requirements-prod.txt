@@ -6,7 +6,7 @@ gunicorn==21.2.0
 
 # Monitoring and metrics
 prometheus-client==0.22.1
-psutil==5.9.6
+psutil==7.0.0
 
 # Async and concurrency
 asyncio-mqtt==0.16.2
