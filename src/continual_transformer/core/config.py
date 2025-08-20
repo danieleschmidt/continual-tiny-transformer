@@ -2,8 +2,13 @@
 
 from dataclasses import dataclass, field
 from typing import Dict, Any, Optional, List
-import yaml
 from pathlib import Path
+
+try:
+    import yaml
+    YAML_AVAILABLE = True
+except ImportError:
+    YAML_AVAILABLE = False
 
 
 @dataclass
@@ -88,17 +93,24 @@ class ContinualConfig:
         
         # Auto-detect device if needed
         if self.device == "auto":
-            import torch
-            if torch.cuda.is_available():
-                self.device = "cuda"
-            elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
-                self.device = "mps"
-            else:
+            try:
+                import torch
+                if torch.cuda.is_available():
+                    self.device = "cuda"
+                elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+                    self.device = "mps"
+                else:
+                    self.device = "cpu"
+            except ImportError:
+                # Fallback to CPU if torch is not available
                 self.device = "cpu"
     
     @classmethod
     def from_yaml(cls, config_path: str) -> 'ContinualConfig':
         """Load configuration from YAML file."""
+        if not YAML_AVAILABLE:
+            raise ImportError("PyYAML is required for YAML configuration loading")
+        
         with open(config_path, 'r') as f:
             config_dict = yaml.safe_load(f)
         
@@ -106,6 +118,9 @@ class ContinualConfig:
     
     def to_yaml(self, config_path: str):
         """Save configuration to YAML file."""
+        if not YAML_AVAILABLE:
+            raise ImportError("PyYAML is required for YAML configuration saving")
+        
         config_dict = self.to_dict()
         
         with open(config_path, 'w') as f:
@@ -119,12 +134,15 @@ class ContinualConfig:
         }
     
     def update(self, **kwargs):
-        """Update configuration with new values."""
+        """Update configuration with new values atomically."""
+        # First validate all keys exist
+        invalid_keys = [key for key in kwargs.keys() if not hasattr(self, key)]
+        if invalid_keys:
+            raise ValueError(f"Unknown configuration keys: {invalid_keys}")
+        
+        # Then apply all updates
         for key, value in kwargs.items():
-            if hasattr(self, key):
-                setattr(self, key, value)
-            else:
-                raise ValueError(f"Unknown configuration key: {key}")
+            setattr(self, key, value)
     
     def get_task_config(self, task_id: str) -> Dict[str, Any]:
         """Get task-specific configuration."""
