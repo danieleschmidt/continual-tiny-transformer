@@ -86,7 +86,7 @@
       }
     },
     "cicd": {
-      "github_actions": ".github/workflows/continual-learning-cicd.yml",
+      "github_actions": "docs/workflows/continual-learning-cicd.yml",
       "features": [
         "Automated testing and quality gates",
         "Multi-environment container builds",
