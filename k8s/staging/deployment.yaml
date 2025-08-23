@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: continual-transformer
+    environment: staging
+    version: v1.0.0
+  name: continual-transformer
+  namespace: continual-learning
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: continual-transformer
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: '9090'
+        prometheus.io/scrape: 'true'
+      labels:
+        app: continual-transformer
+        version: v1.0.0
+    spec:
+      containers:
+      - env:
+        - name: ENVIRONMENT
+          value: staging
+        envFrom:
+        - configMapRef:
+            name: continual-transformer-config
+        - secretRef:
+            name: continual-transformer-secrets
+        image: continual-transformer:staging
+        imagePullPolicy: Always
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+        name: continual-transformer
+        ports:
+        - containerPort: 8000
+          name: http
+        - containerPort: 9090
+          name: metrics
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+          requests:
+            cpu: 200m
+            memory: 512Mi
+        volumeMounts:
+        - mountPath: /app/config
+          name: app-config
+        - mountPath: /app/cache
+          name: model-cache
+      restartPolicy: Always
+      securityContext:
+        fsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+      serviceAccountName: continual-transformer
+      terminationGracePeriodSeconds: 60
+      volumes:
+      - configMap:
+          name: continual-transformer-config
+        name: app-config
+      - emptyDir:
+          sizeLimit: 2Gi
+        name: model-cache

@@ -1,0 +1,16 @@
+apiVersion: v1
+data:
+  BATCH_SIZE: '16'
+  CACHE_SIZE_MB: '512'
+  KEEPALIVE: '2'
+  LOG_LEVEL: INFO
+  MAX_TASKS: '50'
+  METRICS_PORT: '9090'
+  MODEL_NAME: distilbert-base-uncased
+  MONITORING_ENABLED: 'true'
+  TIMEOUT: '60'
+  WORKERS: '4'
+kind: ConfigMap
+metadata:
+  name: continual-transformer-config
+  namespace: continual-learning
