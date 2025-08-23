@@ -1,415 +1,278 @@
-# 🚀 Production Deployment Guide
 
-**continual-tiny-transformer v0.1.0**  
-**Zero-Parameter Continual Learning Framework**
+# Production Deployment Guide - Continual Tiny Transformer
 
-## 🎯 Quick Start (5 Minutes)
+## Overview
 
-### Prerequisites
-- Python 3.8+
-- Docker (optional)
-- Kubernetes (optional)
+This guide provides comprehensive instructions for deploying the Continual Tiny Transformer system to production environments with high availability, security, and scalability.
 
-### Installation
+## Architecture
+
+The production deployment includes:
+- **Containerized Application**: Multi-stage Docker builds optimized for production
+- **Kubernetes Orchestration**: Auto-scaling, health checks, and service discovery  
+- **CI/CD Pipeline**: Automated testing, building, and deployment
+- **Monitoring & Observability**: Comprehensive metrics and logging
+- **Security**: Hardened containers, secrets management, RBAC
+
+## Prerequisites
+
+### Infrastructure Requirements
+- **Kubernetes Cluster**: v1.25+ with at least 3 nodes
+- **Container Registry**: GitHub Container Registry or equivalent
+- **Monitoring**: Prometheus and Grafana (recommended)
+- **Ingress Controller**: NGINX Ingress or equivalent
+- **Storage**: Persistent volumes for model caching
+
+### Access Requirements
+- `kubectl` configured with cluster admin permissions
+- Container registry push/pull access
+- GitHub Actions secrets configured
+
+## Deployment Environments
+
+### Development Environment
+- **Purpose**: Local development and testing
+- **Resources**: Minimal (1 replica, 512Mi memory)
+- **Features**: Hot reload, debug logging
+
+### Staging Environment  
+- **Purpose**: Pre-production testing and validation
+- **Resources**: Moderate (2 replicas, 1Gi memory)
+- **Features**: Production-like configuration, monitoring enabled
+
+### Production Environment
+- **Purpose**: Live customer traffic
+- **Resources**: High availability (3+ replicas, 2Gi memory)
+- **Features**: Auto-scaling, comprehensive monitoring, backup
+
+## Step-by-Step Deployment
+
+### 1. Prepare Infrastructure
+
 ```bash
-# 1. Clone and setup
-git clone <repository-url>
-cd continual-tiny-transformer
+# Create namespaces
+kubectl create namespace continual-learning-staging
+kubectl create namespace continual-learning-prod
 
-# 2. Install dependencies
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# venv\Scripts\activate   # Windows
-pip install -e .
-
-# 3. Verify installation
-python -c "from continual_transformer import ContinualTransformer; print('✅ Ready')"
+# Install monitoring (if not already present)
+helm install prometheus prometheus-community/kube-prometheus-stack
 ```
 
-## 🐳 Docker Deployment
+### 2. Configure Secrets
 
-### Build Image
 ```bash
-docker build -t continual-transformer:latest .
+# Create production secrets
+kubectl create secret generic continual-transformer-secrets \
+  --from-literal=API_KEY="your-secure-api-key" \
+  --from-literal=JWT_SECRET="your-jwt-secret" \
+  --from-literal=DATABASE_URL="your-database-connection" \
+  --namespace continual-learning-prod
 ```
 
-### Run Container
-```bash
-# API Service
-docker run -d \
-  --name continual-transformer \
-  -p 8000:8000 \
-  -e WORKERS=4 \
-  -e LOG_LEVEL=INFO \
-  continual-transformer:latest
+### 3. Deploy to Staging
 
-# Development Mode
-docker run -it \
-  -v $(pwd):/workspace \
-  continual-transformer:latest \
-  bash
+```bash
+# Deploy staging environment
+kubectl apply -f k8s/staging/ --namespace=continual-learning-staging
+
+# Wait for rollout
+kubectl rollout status deployment/continual-transformer -n continual-learning-staging
+
+# Verify deployment
+kubectl get pods -n continual-learning-staging
 ```
 
-## ☸️ Kubernetes Deployment
+### 4. Run Integration Tests
 
-### Apply Manifests
 ```bash
-kubectl apply -f kubernetes/production-deployment.yaml
-kubectl apply -f kubernetes/service.yaml
-kubectl apply -f kubernetes/ingress.yaml
+# Run comprehensive tests against staging
+python scripts/integration_tests.py --environment=staging
+
+# Validate health endpoints
+curl http://staging.continual-learning.com/health
+curl http://staging.continual-learning.com/metrics
 ```
 
-### Monitor Deployment
+### 5. Deploy to Production
+
 ```bash
-kubectl get pods -l app=continual-transformer
-kubectl logs -f deployment/continual-transformer
+# Blue-green deployment to production
+kubectl apply -f k8s/production/ --namespace=continual-learning-prod
+
+# Monitor rollout
+kubectl rollout status deployment/continual-transformer -n continual-learning-prod
+
+# Verify auto-scaling is enabled
+kubectl get hpa -n continual-learning-prod
 ```
 
-## 🔧 Configuration Options
+### 6. Post-Deployment Validation
+
+```bash
+# Run smoke tests
+python scripts/smoke_tests.py --environment=production
+
+# Check monitoring dashboards
+# - Grafana: Application metrics and performance
+# - Prometheus: System and custom metrics  
+# - Logs: Centralized logging aggregation
+```
+
+## Configuration Management
+
+### ConfigMaps
+Application configuration is managed through Kubernetes ConfigMaps:
+- Model parameters and limits
+- Feature flags and toggles
+- Environment-specific settings
+
+### Secrets
+Sensitive data is managed through Kubernetes Secrets:
+- API keys and tokens
+- Database credentials
+- TLS certificates
 
 ### Environment Variables
-```bash
-# Core Settings
-CONTINUAL_MODEL_NAME=distilbert-base-uncased
-CONTINUAL_MAX_TASKS=50
-CONTINUAL_DEVICE=auto
-CONTINUAL_CACHE_DIR=/tmp/models
+Key environment variables:
+- `ENVIRONMENT`: deployment environment
+- `LOG_LEVEL`: logging verbosity
+- `MONITORING_ENABLED`: enable/disable metrics
+- `MAX_TASKS`: maximum concurrent tasks
 
-# Performance Settings
-CONTINUAL_MIXED_PRECISION=true
-CONTINUAL_ENABLE_MONITORING=true
-CONTINUAL_BATCH_SIZE=32
-CONTINUAL_MAX_SEQUENCE_LENGTH=512
+## Monitoring & Observability
 
-# API Settings
-API_HOST=0.0.0.0
-API_PORT=8000
-API_WORKERS=4
-API_TIMEOUT=30
+### Health Checks
+- **Liveness Probe**: `/health` - Application is running
+- **Readiness Probe**: `/health` - Application is ready to serve traffic
 
-# Monitoring Settings
-PROMETHEUS_ENABLED=true
-PROMETHEUS_PORT=9090
-HEALTH_CHECK_INTERVAL=30
-```
+### Metrics
+- **Application Metrics**: Task processing, accuracy, latency
+- **System Metrics**: CPU, memory, disk usage
+- **Business Metrics**: User engagement, model performance
 
-### Configuration File
-```yaml
-# config/production.yaml
-model:
-  name: "distilbert-base-uncased"
-  max_tasks: 50
-  device: "auto"
-  freeze_base_model: true
+### Logging
+- **Structured Logging**: JSON format for parsing
+- **Log Levels**: DEBUG, INFO, WARN, ERROR
+- **Centralized Collection**: Fluentd or equivalent
 
-optimization:
-  mixed_precision: true
-  gradient_checkpointing: false
-  enable_compilation: true
+### Alerts
+- **High Error Rate**: > 5% errors for 5 minutes
+- **High Latency**: > 200ms average for 5 minutes  
+- **Resource Usage**: > 80% CPU/memory for 10 minutes
+- **Pod Failures**: Pod restart or crash
 
-monitoring:
-  enabled: true
-  prometheus_port: 9090
-  health_checks: true
-  metrics_interval: 10
-
-api:
-  host: "0.0.0.0"
-  port: 8000
-  workers: 4
-  timeout: 30
-```
-
-## 📊 Monitoring & Observability
-
-### Health Check Endpoint
-```bash
-curl http://localhost:8000/health
-```
-
-### Prometheus Metrics
-```bash
-# Available at http://localhost:9090/metrics
-continual_transformer_tasks_total
-continual_transformer_inference_duration_seconds
-continual_transformer_memory_usage_bytes
-continual_transformer_error_rate
-```
-
-### Grafana Dashboard
-Import dashboard from `monitoring/grafana-dashboard.json`
-
-## 🔒 Security Configuration
-
-### API Security
-```bash
-# Enable authentication
-export API_AUTH_ENABLED=true
-export API_SECRET_KEY="your-secret-key"
-
-# Rate limiting
-export API_RATE_LIMIT="100/minute"
-export API_RATE_LIMIT_BURST=20
-```
+## Security
 
 ### Container Security
-```dockerfile
-# Run as non-root user
-USER 1000:1000
+- Non-root user execution
+- Read-only root filesystem
+- Security context constraints
+- Minimal base images
 
-# Read-only filesystem
---read-only --tmpfs /tmp
+### Network Security
+- Network policies for traffic isolation
+- TLS encryption for all communications
+- Service mesh for advanced security (optional)
 
-# Security options
---security-opt=no-new-privileges:true
-```
+### Access Control
+- RBAC for Kubernetes resources
+- Service accounts with minimal permissions
+- Pod security standards enforcement
 
-## 🚀 API Usage Examples
+### Secrets Management
+- Kubernetes secrets for sensitive data
+- Secret rotation policies
+- External secret management integration (optional)
 
-### Basic Classification
-```python
-import requests
+## Scaling & Performance
 
-# Register a task
-response = requests.post("http://localhost:8000/tasks", json={
-    "task_id": "sentiment_analysis",
-    "task_type": "classification",
-    "num_labels": 3
-})
+### Auto-Scaling
+- **Horizontal Pod Autoscaler**: Scale based on CPU/memory
+- **Cluster Autoscaler**: Scale nodes based on demand
+- **Vertical Pod Autoscaler**: Optimize resource requests
 
-# Make predictions
-response = requests.post("http://localhost:8000/predict", json={
-    "task_id": "sentiment_analysis",
-    "text": "This product is amazing!"
-})
+### Performance Optimization
+- Resource requests and limits
+- Anti-affinity for high availability
+- Persistent volumes for model caching
+- CDN for static assets
 
-print(response.json())
-# {"predictions": [2], "probabilities": [[0.1, 0.2, 0.7]], "task_id": "sentiment_analysis"}
-```
+## Disaster Recovery
 
-### Batch Processing
-```python
-# Batch predictions
-response = requests.post("http://localhost:8000/predict/batch", json={
-    "task_id": "sentiment_analysis",
-    "texts": [
-        "Great product!",
-        "Terrible experience.",
-        "It's okay."
-    ]
-})
-```
+### Backup Strategy
+- **Configuration Backup**: GitOps approach with version control
+- **Data Backup**: Regular snapshots of persistent data
+- **Model Artifacts**: Backup trained models and checkpoints
 
-### Model Management
-```python
-# Get model status
-response = requests.get("http://localhost:8000/status")
+### Recovery Procedures
+- **Rollback**: Automated rollback to previous version
+- **Point-in-Time Recovery**: Restore to specific timestamp
+- **Cross-Region Failover**: Multi-region deployment (advanced)
 
-# List tasks
-response = requests.get("http://localhost:8000/tasks")
+### Business Continuity
+- **RTO (Recovery Time Objective)**: < 15 minutes
+- **RPO (Recovery Point Objective)**: < 5 minutes data loss
+- **Availability Target**: 99.9% uptime
 
-# Get performance metrics
-response = requests.get("http://localhost:8000/metrics")
-```
-
-## 📈 Performance Tuning
-
-### CPU Optimization
-```yaml
-# Increase workers for CPU
-workers: 8
-threads_per_worker: 2
-
-# Enable torch.compile
-torch_compile: true
-operator_fusion: true
-```
-
-### GPU Optimization
-```yaml
-# GPU settings
-device: "cuda:0"
-mixed_precision: true
-gradient_checkpointing: true
-
-# Batch optimization
-batch_size: 64
-max_sequence_length: 256
-```
-
-### Memory Optimization
-```yaml
-# Memory settings
-gradient_accumulation_steps: 4
-dataloader_num_workers: 4
-pin_memory: true
-prefetch_factor: 2
-```
-
-## 🔄 Scaling Strategies
-
-### Horizontal Scaling
-```yaml
-# Kubernetes HPA
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: continual-transformer-hpa
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: continual-transformer
-  minReplicas: 2
-  maxReplicas: 10
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-```
-
-### Load Balancing
-```bash
-# NGINX configuration
-upstream continual_transformer {
-    server continual-transformer-1:8000;
-    server continual-transformer-2:8000;
-    server continual-transformer-3:8000;
-}
-
-server {
-    listen 80;
-    location / {
-        proxy_pass http://continual_transformer;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
-```
-
-## 🚨 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
-#### Model Loading Errors
+#### Deployment Failures
 ```bash
-# Check model cache
-ls -la /tmp/models/
+# Check pod status
+kubectl get pods -n continual-learning-prod
 
-# Clear cache and retry
-rm -rf /tmp/models/*
-```
+# View pod logs
+kubectl logs -f deployment/continual-transformer -n continual-learning-prod
 
-#### Memory Issues
-```bash
-# Monitor memory usage
-docker stats continual-transformer
-
-# Adjust memory limits
-docker run --memory=4g continual-transformer:latest
+# Describe pod for events
+kubectl describe pod <pod-name> -n continual-learning-prod
 ```
 
 #### Performance Issues
 ```bash
-# Check system resources
-top -p $(pgrep -f continual-transformer)
+# Check resource usage
+kubectl top pods -n continual-learning-prod
 
-# Enable performance profiling
-export CONTINUAL_PROFILING=true
+# View HPA status
+kubectl get hpa -n continual-learning-prod
+
+# Check application metrics
+curl http://service-url/metrics
 ```
 
-### Logs Analysis
+#### Connectivity Issues
 ```bash
-# API logs
-docker logs continual-transformer
+# Test service connectivity
+kubectl port-forward svc/continual-transformer-service 8080:80 -n continual-learning-prod
 
-# Application logs
-tail -f logs/continual-transformer.log
-
-# Error tracking
-grep "ERROR" logs/*.log | tail -20
+# Check ingress configuration
+kubectl get ingress -n continual-learning-prod
 ```
 
-## 📋 Maintenance
+### Support Contacts
+- **DevOps Team**: devops@company.com
+- **Platform Team**: platform@company.com  
+- **On-Call**: Use PagerDuty rotation
 
-### Backup Strategy
-```bash
-# Backup model states
-tar -czf backup-$(date +%Y%m%d).tar.gz data/models/
+## Maintenance
 
-# Backup configuration
-cp config/production.yaml backups/
-```
+### Regular Tasks
+- **Security Updates**: Monthly container image updates
+- **Performance Review**: Weekly performance analysis
+- **Capacity Planning**: Monthly resource utilization review
+- **Backup Verification**: Weekly backup restoration tests
 
-### Updates
-```bash
-# Rolling update
-kubectl set image deployment/continual-transformer \
-  continual-transformer=continual-transformer:v0.2.0
-
-# Health check during update
-kubectl rollout status deployment/continual-transformer
-```
-
-### Monitoring Alerts
-```yaml
-# Prometheus alerting rules
-groups:
-- name: continual-transformer
-  rules:
-  - alert: HighErrorRate
-    expr: continual_transformer_error_rate > 0.1
-    for: 5m
-    annotations:
-      summary: "High error rate detected"
-  
-  - alert: HighMemoryUsage
-    expr: continual_transformer_memory_usage_bytes > 2e9
-    for: 2m
-    annotations:
-      summary: "Memory usage exceeding 2GB"
-```
-
-## 🎯 Best Practices
-
-### Development
-- Use virtual environments for isolation
-- Pin dependency versions in requirements.txt
-- Implement comprehensive testing
-- Use configuration files over environment variables
-
-### Production
-- Enable monitoring and logging
-- Implement health checks
-- Use container orchestration
-- Set up automated backups
-- Configure alerting rules
-
-### Security
-- Run containers as non-root
-- Use secrets management
-- Enable API authentication
-- Implement rate limiting
-- Regular security updates
-
-## 📞 Support
-
-### Resources
-- **Documentation**: `/docs` directory
-- **Examples**: `/examples` directory  
-- **API Reference**: `/docs/api`
-- **Troubleshooting**: `/docs/troubleshooting.md`
-
-### Community
-- **Issues**: GitHub Issues
-- **Discussions**: GitHub Discussions
-- **Contributions**: See CONTRIBUTING.md
+### Upgrade Procedures
+1. Test upgrade in staging environment
+2. Schedule maintenance window
+3. Perform blue-green deployment to production
+4. Validate upgrade success
+5. Monitor for issues post-upgrade
 
 ---
 
-**🚀 Ready for Production!**
-
-*Your continual learning framework is now deployed and ready to scale.*
+**Last Updated**: 2025-08-23 04:36:46  
+**Version**: 1.0.0  
+**Owner**: Continual Learning Platform Team

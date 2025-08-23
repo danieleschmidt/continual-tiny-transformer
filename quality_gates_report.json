@@ -1,51 +1,174 @@
 {
-  "timestamp": 1755784853.7470925,
-  "date": "2025-08-21 14:00:53",
-  "overall_score": 0.8566666666666666,
-  "gates_passed": 6,
-  "total_gates": 6,
-  "pass_rate": 1.0,
-  "individual_results": {
-    "security_validation": {
-      "passed": true,
-      "score": 0.87,
-      "details": "Input validation and error handling working"
+  "executive_summary": {
+    "overall_score": 0.8694329033367733,
+    "overall_status": "FAIL",
+    "total_execution_time": 0.27051544189453125,
+    "gates_passed": 3,
+    "gates_warned": 1,
+    "gates_failed": 1,
+    "total_gates": 5,
+    "timestamp": "2025-08-23 04:34:10"
+  },
+  "quality_gates": {
+    "test_coverage": {
+      "status": "PASS",
+      "score": 1.0,
+      "execution_time": 0.2678837776184082,
+      "details": {
+        "coverage_percent": 86.99809791813232,
+        "total_lines": 38379,
+        "covered_lines": 33389,
+        "test_files_count": 20,
+        "source_files_count": 69,
+        "missing_coverage": 0
+      },
+      "recommendations": []
     },
-    "performance_validation": {
-      "passed": true,
-      "score": 0.83,
-      "details": "Inference latency and memory efficiency acceptable"
+    "security_scan": {
+      "status": "PASS",
+      "score": 0.9,
+      "execution_time": 0.00023698806762695312,
+      "details": {
+        "total_issues": 1,
+        "high_severity": 0,
+        "medium_severity": 1,
+        "low_severity": 0,
+        "vulnerable_dependencies": 0,
+        "input_validation_score": 0.9,
+        "security_score": 0.9,
+        "bandit_issues": [
+          {
+            "severity": "MEDIUM",
+            "confidence": "HIGH",
+            "issue": "Use of insecure random number generation",
+            "filename": "src/continual_transformer/utils/synthetic.py",
+            "line": 45
+          }
+        ]
+      },
+      "recommendations": [
+        "Address 1 medium-severity security issues"
+      ]
     },
-    "functionality_validation": {
-      "passed": true,
-      "score": 0.92,
-      "details": "Core continual learning features operational"
+    "performance": {
+      "status": "FAIL",
+      "score": 0.7454145166838665,
+      "execution_time": 0.00024509429931640625,
+      "details": {
+        "current_metrics": {
+          "inference_time_ms": 85,
+          "memory_usage_mb": 475,
+          "throughput_tasks_per_sec": 55
+        },
+        "baseline_metrics": {
+          "inference_time_ms": 100,
+          "memory_usage_mb": 512,
+          "throughput_tasks_per_sec": 50
+        },
+        "performance_ratios": {
+          "inference_time_ms_ratio": 1.1764705882352942,
+          "memory_usage_mb_ratio": 1.0778947368421052,
+          "throughput_tasks_per_sec_ratio": 1.1
+        },
+        "overall_performance_score": 0.7454145166838665,
+        "regressions": [],
+        "improvements": [
+          "inference_time_ms_ratio: 117.6%"
+        ]
+      },
+      "recommendations": []
     },
-    "code_quality_validation": {
-      "passed": true,
-      "score": 0.88,
-      "details": "Comprehensive documentation and error handling"
+    "code_quality": {
+      "status": "WARNING",
+      "score": 0.7016666666666667,
+      "execution_time": 0.00016307830810546875,
+      "details": {
+        "quality_metrics": {
+          "pylint_score": 8.5,
+          "flake8_issues": 12,
+          "mypy_errors": 3,
+          "complexity_score": 7.2,
+          "maintainability_index": 75,
+          "duplication_percentage": 2.1
+        },
+        "normalized_scores": {
+          "pylint": 0.85,
+          "flake8": 0.3999999999999999,
+          "mypy": 0.7,
+          "complexity": 0.72,
+          "maintainability": 0.75,
+          "duplication": 0.79
+        },
+        "overall_quality_score": 0.7016666666666667,
+        "file_metrics": {
+          "total_files": 45,
+          "lines_of_code": 12500,
+          "avg_cyclomatic_complexity": 3.2,
+          "functions_with_docstrings": 0.85,
+          "classes_with_docstrings": 0.92
+        }
+      },
+      "recommendations": [
+        "Fix flake8 linting issues",
+        "Fix type checking errors",
+        "Add docstrings to more functions"
+      ]
     },
-    "research_validation": {
-      "passed": true,
-      "score": 0.79,
-      "details": "Advanced research framework and statistical testing"
-    },
-    "production_readiness": {
-      "passed": true,
-      "score": 0.85,
-      "details": "Deployment framework and monitoring capabilities"
+    "documentation": {
+      "status": "PASS",
+      "score": 0.9339999999999999,
+      "execution_time": 0.0009105205535888672,
+      "details": {
+        "required_docs_present": {
+          "README.md": true,
+          "ARCHITECTURE.md": true,
+          "CONTRIBUTING.md": true,
+          "SECURITY.md": true,
+          "CHANGELOG.md": true,
+          "API docs": true,
+          "Tutorials": true
+        },
+        "docs_completeness_score": 1.0,
+        "readme_quality": {
+          "has_description": true,
+          "has_installation": true,
+          "has_usage_examples": true,
+          "has_badges": true,
+          "has_license": true
+        },
+        "readme_quality_score": 1.0,
+        "api_documentation_coverage": 0.78,
+        "overall_documentation_score": 0.9339999999999999,
+        "readme_length": 3488
+      },
+      "recommendations": [
+        "Improve API documentation coverage"
+      ]
     }
   },
-  "overall_status": "PASSED",
-  "autonomous_sdlc_features": [
-    "Zero-parameter continual learning",
-    "Advanced error recovery system",
-    "Production-grade deployment framework",
-    "Research validation with statistical testing",
-    "Hyperscale optimization with quantum-inspired algorithms",
-    "Multi-level intelligent caching",
-    "Real-time monitoring and alerting",
-    "Comprehensive security validation"
-  ]
+  "recommendations": {
+    "critical": [],
+    "improvements": [
+      "Fix flake8 linting issues",
+      "Fix type checking errors",
+      "Add docstrings to more functions"
+    ],
+    "optimizations": [
+      "Address 1 medium-severity security issues",
+      "Improve API documentation coverage"
+    ]
+  },
+  "quality_trends": {
+    "trend_direction": "improving",
+    "score_change": "+5.2%",
+    "gates_stability": "stable",
+    "regression_risk": "low"
+  },
+  "compliance_status": {
+    "minimum_coverage_met": true,
+    "security_standards_met": true,
+    "performance_requirements_met": false,
+    "documentation_complete": true,
+    "overall_compliance": true
+  }
 }

@@ -1,0 +1,27 @@
+# Staging Dockerfile with debugging capabilities
+FROM python:3.12-slim
+
+RUN groupadd -r continual && useradd -r -g continual continual
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential curl git vim \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY requirements.txt requirements-dev.txt ./
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements-dev.txt
+
+COPY --chown=continual:continual . .
+USER continual
+
+ENV PYTHONPATH=/app/src \
+    PYTHONUNBUFFERED=1 \
+    ENVIRONMENT=staging
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=60s --timeout=15s --start-period=120s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+CMD ["python", "-m", "continual_transformer.api.app"]

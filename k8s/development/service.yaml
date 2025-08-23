@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: continual-transformer
+  name: continual-transformer-service
+  namespace: continual-learning
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 8000
+  - name: metrics
+    port: 9090
+    protocol: TCP
+    targetPort: 9090
+  selector:
+    app: continual-transformer
+  type: ClusterIP
