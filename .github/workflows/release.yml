@@ -1,0 +1,160 @@
+# Complete Release workflow for continual-tiny-transformer
+# Save this file as .github/workflows/release.yml in your repository
+# Provides automated release management and publishing
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., v1.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  id-token: write  # For trusted publishing to PyPI
+
+jobs:
+  validate:
+    name: Validate Release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Extract version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          else
+            VERSION="${{ github.event.inputs.version }}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Version: ${VERSION}"
+      
+      - name: Validate version format
+        run: |
+          if [[ ! "${{ steps.version.outputs.version }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid version format. Expected: vX.Y.Z"
+            exit 1
+          fi
+
+  test:
+    name: Full Test Suite
+    runs-on: ubuntu-latest
+    needs: validate
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -e ".[dev,test]"
+      
+      - name: Run comprehensive tests
+        run: |
+          pytest tests/ --cov=continual_transformer --cov-report=xml
+          make lint
+          make type-check
+          make security
+
+  build:
+    name: Build Release
+    runs-on: ubuntu-latest
+    needs: [validate, test]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      
+      - name: Install build tools
+        run: pip install --upgrade pip build twine
+      
+      - name: Build package
+        run: python -m build
+      
+      - name: Verify package
+        run: |
+          twine check dist/*
+          pip install dist/*.whl
+          python -c "import continual_transformer; print('Package installed successfully')"
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-dist
+          path: dist/
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [validate, build]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-dist
+          path: dist/
+      
+      - name: Generate changelog
+        id: changelog
+        run: |
+          git log --pretty=format:"* %s" $(git describe --tags --abbrev=0 HEAD~1)..HEAD > TEMP_CHANGELOG.md
+          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+          cat TEMP_CHANGELOG.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.validate.outputs.version }}
+          name: Release ${{ needs.validate.outputs.version }}
+          body: |
+            ## Changes
+            ${{ steps.changelog.outputs.CHANGELOG }}
+            
+            ## Installation
+            ```bash
+            pip install continual-tiny-transformer==${{ needs.validate.outputs.version }}
+            ```
+          draft: false
+          prerelease: ${{ contains(needs.validate.outputs.version, '-') }}
+          files: dist/*
+
+  publish-pypi:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    needs: [validate, create-release]
+    environment: release
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-dist
+          path: dist/
+      
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          verbose: true

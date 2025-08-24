@@ -2,18 +2,18 @@
   "executive_summary": {
     "overall_score": 0.8694329033367733,
     "overall_status": "FAIL",
-    "total_execution_time": 0.27051544189453125,
+    "total_execution_time": 0.15065979957580566,
     "gates_passed": 3,
     "gates_warned": 1,
     "gates_failed": 1,
     "total_gates": 5,
-    "timestamp": "2025-08-23 04:34:10"
+    "timestamp": "2025-08-24 13:29:17"
   },
   "quality_gates": {
     "test_coverage": {
       "status": "PASS",
       "score": 1.0,
-      "execution_time": 0.2678837776184082,
+      "execution_time": 0.1491243839263916,
       "details": {
         "coverage_percent": 86.99809791813232,
         "total_lines": 38379,
@@ -27,7 +27,7 @@
     "security_scan": {
       "status": "PASS",
       "score": 0.9,
-      "execution_time": 0.00023698806762695312,
+      "execution_time": 8.225440979003906e-05,
       "details": {
         "total_issues": 1,
         "high_severity": 0,
@@ -53,7 +53,7 @@
     "performance": {
       "status": "FAIL",
       "score": 0.7454145166838665,
-      "execution_time": 0.00024509429931640625,
+      "execution_time": 0.00012302398681640625,
       "details": {
         "current_metrics": {
           "inference_time_ms": 85,
@@ -81,7 +81,7 @@
     "code_quality": {
       "status": "WARNING",
       "score": 0.7016666666666667,
-      "execution_time": 0.00016307830810546875,
+      "execution_time": 0.00013303756713867188,
       "details": {
         "quality_metrics": {
           "pylint_score": 8.5,
@@ -117,7 +117,7 @@
     "documentation": {
       "status": "PASS",
       "score": 0.9339999999999999,
-      "execution_time": 0.0009105205535888672,
+      "execution_time": 0.0006136894226074219,
       "details": {
         "required_docs_present": {
           "README.md": true,
