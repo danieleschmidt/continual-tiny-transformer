@@ -1,82 +1,85 @@
-# Dependabot configuration for continual-tiny-transformer
-# Automated dependency updates with security prioritization
-# https://docs.github.com/en/code-security/dependabot
+# Dependabot Configuration Template
+# Copy to .github/dependabot.yml and customize as needed
 
 version: 2
 updates:
-  # Python dependencies (pip)
+  # Python dependencies
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
-      time: "06:00"
+      time: "09:00"
       timezone: "UTC"
     open-pull-requests-limit: 10
-    reviewers:
-      - "danieleschmidt"
-    assignees:
-      - "danieleschmidt"
+    assignees: []  # Configure as needed
+    reviewers: []  # Configure as needed
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
     labels:
       - "dependencies"
       - "python"
-    commit-message:
-      prefix: "deps"
-      include: "scope"
-    # Group updates for efficiency
+    # Group updates for better management
     groups:
-      production-dependencies:
-        dependency-type: "production"
-        update-types:
-          - "minor"
-          - "patch"
       development-dependencies:
-        dependency-type: "development"
+        patterns:
+          - "pytest*"
+          - "black"
+          - "ruff"
+          - "mypy*"
+          - "pre-commit"
+          - "tox"
+          - "sphinx*"
         update-types:
           - "minor"
           - "patch"
-    # Security-focused ignores
-    ignore:
-      # Ignore major version updates for core ML dependencies
-      - dependency-name: "torch"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "transformers"
-        update-types: ["version-update:semver-major"]
+      ml-dependencies:
+        patterns:
+          - "torch*"
+          - "transformers"
+          - "numpy"
+          - "scipy"
+          - "scikit-learn"
+        update-types:
+          - "patch"
+      security-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "security"
 
-  # GitHub Actions updates
+  # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
-      time: "06:00"
+      time: "10:00"
       timezone: "UTC"
-    reviewers:
-      - "danieleschmidt"
-    assignees:
-      - "danieleschmidt"
-    labels:
-      - "dependencies"
-      - "github-actions"
+    open-pull-requests-limit: 5
+    assignees: []  # Configure as needed
     commit-message:
       prefix: "ci"
       include: "scope"
+    labels:
+      - "ci"
+      - "github-actions"
 
-  # Docker base images
+  # Docker dependencies
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "monday"
-      time: "06:00"
+      day: "tuesday"
+      time: "09:00"
       timezone: "UTC"
-    reviewers:
-      - "danieleschmidt"
-    assignees:
-      - "danieleschmidt"
-    labels:
-      - "dependencies"
-      - "docker"
+    open-pull-requests-limit: 3
+    assignees: []  # Configure as needed
     commit-message:
       prefix: "docker"
       include: "scope"
+    labels:
+      - "docker"
+      - "dependencies"
