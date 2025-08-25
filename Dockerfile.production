@@ -1,5 +1,5 @@
 # Production Multi-stage Dockerfile for Continual Learning System
-FROM python:3.12-slim as builder
+FROM python:3.13-slim as builder
 
 # Build arguments
 ARG BUILD_DATE
@@ -35,7 +35,7 @@ RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements-prod.txt
 
 # Production stage
-FROM python:3.12-slim as production
+FROM python:3.13-slim as production
 
 # Copy user from builder stage
 COPY --from=builder /etc/passwd /etc/passwd
