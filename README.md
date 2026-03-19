@@ -1,122 +1,112 @@
 # Continual Tiny Transformer
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+A minimal, from-scratch implementation of a small transformer with **Elastic Weight Consolidation (EWC)** for continual learning — zero new parameters per task.
 
-Memory-efficient continual learning for transformers that adds **ZERO new parameters per task**. Based on Amazon Research's breakthrough showing how to extend models to dozens of tasks without catastrophic forgetting or parameter bloat.
-
-## 🎯 Problem Statement
-
-Traditional continual learning approaches suffer from:
-- **Catastrophic forgetting** when learning new tasks
-- **Parameter explosion** with linear/exponential memory growth
-- **Deployment challenges** due to ever-increasing model sizes
-- **Storage costs** that scale with number of tasks
-
-## 🚀 Solution
-
-Our zero-parameter continual learning framework:
-- ✅ **Constant memory usage** regardless of task count
-- ✅ **Zero parameter expansion** per new task
-- ✅ **High knowledge retention** (>90% on previous tasks)
-- ✅ **Scalable to 50+ tasks** without performance degradation
-
-## 🏗️ Architecture Overview
+## Results (demo output)
 
 ```
-Input → Task Router → Frozen Transformer → Activation Adapter → Output
-                          ↓
-                    Knowledge Base
-                    (Constant Size)
+Method       A acc after A A acc after B Forgetting   B acc
+------------------------------------------------------------
+Naive                0.976         0.878     +0.098   0.982
+EWC                  0.960         0.982     -0.022   0.970
+------------------------------------------------------------
+EWC reduced forgetting by 0.120 accuracy points.
+✓ EWC successfully mitigated catastrophic forgetting.
 ```
 
-### Key Components
-- **Frozen Base Transformer**: Core weights never change after initial training
-- **Activation Adapters**: Task-specific adaptation through activation modifications
-- **Task Router**: Lightweight task identification and routing
-- **Knowledge Distillation**: Prevents forgetting without parameter growth
+**Naive fine-tuning**: 9.8% forgetting on Task A after training Task B.  
+**EWC**: ~0% forgetting, while still learning Task B to 97% accuracy.
 
-## 📖 Quick Start
+## What it does
 
-### Installation
+Trains a small transformer (2 layers, ~70 K params) on two sequential tasks with a domain shift:
+
+- **Task A** (`low_range`): sequences from token IDs 1–32, label = 1 if mean > mid-low threshold
+- **Task B** (`high_range`): sequences from token IDs 33–63, same rule on different tokens
+
+Training Task B naively forces the model to overwrite the token embeddings it learned for Task A.  
+EWC prevents this by penalising changes to parameters that were important for Task A.
+
+## Architecture
+
+```
+Token IDs → Embedding → Positional Encoding
+  → N × TransformerEncoderLayer (pre-LN)
+  → mean pool → LayerNorm → Linear head(s)
+```
+
+All code is plain PyTorch — no HuggingFace, no external data downloads.  
+Multi-head support: `model.add_head("task_name", num_classes)` for task-incremental setups.
+
+## Quick start
 
 ```bash
-pip install continual-tiny-transformer
+# Install (only dependency: torch)
+pip install -e .
+
+# Run demo (~2 min on CPU, shows forgetting vs EWC)
+python demo.py
+
+# Shorter smoke test
+python demo.py --epochs 15 --ewc-lambda 500
+
+# Tests (30 tests, ~10 sec)
+pytest
 ```
 
-### Basic Usage
+## EWC usage
 
 ```python
-from continual_transformer import ContinualTransformer
+from continual_transformer import TinyTransformer, EWC, generate_task
+from continual_transformer.train import train, evaluate
+import torch
 
-# Initialize model
-model = ContinualTransformer(
-    model_size="base",
-    max_tasks=50
-)
+device = torch.device("cpu")
+task_a = generate_task("low_range",  vocab_size=64)
+task_b = generate_task("high_range", vocab_size=64)
 
-# Learn first task
-model.learn_task(
-    task_id="sentiment",
-    train_data=sentiment_data,
-    epochs=10
-)
+model = TinyTransformer(vocab_size=64)
+train(model, task_a.train_loader, task_a.val_loader, device, epochs=30)
 
-# Learn second task (no new parameters!)
-model.learn_task(
-    task_id="summarization", 
-    train_data=summary_data,
-    epochs=10
-)
+# Snapshot Fisher info + parameter anchor after Task A
+ewc = EWC(model, task_a.train_loader, device, n_samples=500)
 
-# Use for inference
-result = model.predict(
-    text="Great product!",
-    task_id="sentiment"
-)
+# Train on Task B with EWC penalty
+train(model, task_b.train_loader, task_b.val_loader, device,
+      epochs=30, ewc=ewc, ewc_lambda=500)
+
+print(evaluate(model, task_a.val_loader, device))  # still high!
 ```
 
-## 📊 Performance
+## EWC penalty
 
-| Metric | Value |
-|--------|-------|
-| Memory Growth | **0%** per task |
-| Task Capacity | **50+** tasks |
-| Knowledge Retention | **>90%** |
-| Training Overhead | **<10%** per task |
-
-## 🔗 Links
-
-- [📋 Project Charter](PROJECT_CHARTER.md)
-- [🏛️ Architecture Documentation](ARCHITECTURE.md)
-- [🗺️ Roadmap](docs/ROADMAP.md)
-- [📚 API Documentation](docs/api/)
-- [🎓 Tutorials](docs/tutorials/)
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Amazon Research for the foundational zero-parameter continual learning approach
-- The PyTorch team for the excellent deep learning framework
-- The broader continual learning research community
-
-## 📚 Citation
-
-If you use this work in your research, please cite:
-
-```bibtex
-@software{continual_tiny_transformer,
-  title={Continual Tiny Transformer: Zero-Parameter Continual Learning},
-  author={Schmidt, Daniel},
-  year={2025},
-  url={https://github.com/your-org/continual-tiny-transformer}
-}
 ```
+L_total = L_task_B  +  (λ/2) · Σ_i  F_i · (θ_i − θ*_i)²
+```
+
+| Symbol | Meaning |
+|--------|---------|
+| `F_i`  | Diagonal Fisher estimate for parameter `i` (importance weight) |
+| `θ*_i` | Parameter values after Task A (anchor) |
+| `λ`    | Trade-off — higher = more protection for Task A, less plasticity |
+
+## Project structure
+
+```
+continual_transformer/
+  model.py   – TinyTransformer (from-scratch, multi-head)
+  ewc.py     – EWC: Fisher estimation + penalty
+  tasks.py   – Synthetic task generators (no data downloads)
+  train.py   – Training loop + evaluation
+tests/
+  test_model.py  – architecture tests
+  test_ewc.py    – EWC unit + end-to-end tests
+  test_tasks.py  – task generator tests
+  test_train.py  – training loop tests
+demo.py    – side-by-side forgetting vs EWC demo
+```
+
+## References
+
+- Kirkpatrick et al. (2017) — *Overcoming catastrophic forgetting in neural networks*  
+  <https://arxiv.org/abs/1612.00796>

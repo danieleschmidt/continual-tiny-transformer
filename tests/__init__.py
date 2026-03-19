@@ -1,1 +1,1 @@
-"""Test suite for continual-tiny-transformer."""
+# tests package
